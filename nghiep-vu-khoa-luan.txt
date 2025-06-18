@@ -1,0 +1,143 @@
+PHÂN TÍCH NGHIỆP VỤ QUẢN LÝ ĐỀ TÀI ĐỒ ÁN/ KHÓA LUẬN KHOA CNTT
+1. QUẢN LÝ TÀI KHOẢN VÀ PHÂN QUYỀN
+Các bảng dữ liệu:
+sys_user, sys_role, sys_user_role, sys_function, sys_role_function
+
+Nghiệp vụ:
+
+Đăng ký, đăng nhập hệ thống
+
+Phân quyền sử dụng cho các vai trò: Sinh viên, Giảng viên, Quản trị viên
+
+Quản lý thông tin tài khoản, đổi mật khẩu, khóa/mở tài khoản
+
+2. QUẢN LÝ THÔNG TIN CÁ NHÂN, KHOA, NGÀNH
+Các bảng dữ liệu:
+student_info, lecturer_info, information, department, major
+
+Nghiệp vụ:
+
+Quản lý thông tin sinh viên, giảng viên
+
+Quản lý khoa, ngành, lớp học
+
+Cập nhật, tra cứu, tìm kiếm thông tin cá nhân
+
+3. NGHIỆP VỤ TẠO NHÓM SINH VIÊN
+Các bảng dữ liệu:
+group, group_member, invite
+
+Nghiệp vụ:
+
+Mời thành viên vào nhóm (lọc cùng ngành)
+
+Nhận và chấp nhận/hủy lời mời vào nhóm
+
+Tạo nhóm (sau khi các thành viên đã accept lời mời)
+
+Hệ thống sinh mã nhóm ngẫu nhiên
+
+Điều kiện: tối đa 4 thành viên, chưa thuộc nhóm nào
+
+Quản lý thành viên, nhóm trưởng, danh sách nhóm
+
+4. ĐĂNG KÝ VÀ PHÂN CÔNG ĐỀ TÀI
+Các bảng dữ liệu:
+thesis, thesis_group, thesis_lecturer
+
+Nghiệp vụ:
+
+Nhóm đăng ký đề tài (ghi nhận nhóm tham gia đề tài)
+
+Quản lý đề tài: thêm, sửa, xóa, phân loại đề tài
+
+Phân công giảng viên hướng dẫn cho đề tài
+
+5. QUẢN LÝ HỘI ĐỒNG CHẤM BẢO VỆ
+Các bảng dữ liệu:
+committee, thesis_committee
+
+Nghiệp vụ:
+
+Thành lập hội đồng chấm bảo vệ đề tài
+
+Phân công thành viên hội đồng, chủ tịch
+
+Gán hội đồng cho từng đề tài
+
+6. QUẢN LÝ NHIỆM VỤ, TIẾN ĐỘ THỰC HIỆN
+Các bảng dữ liệu:
+mission, task, task_comment
+
+Nghiệp vụ:
+
+Phân chia nhiệm vụ, công việc (task) cho thành viên trong nhóm
+
+Theo dõi, cập nhật tiến độ từng nhiệm vụ/công việc
+
+Nhận xét, báo cáo tiến độ, trao đổi trong nhóm qua comment
+
+7. NGHIỆP VỤ CHẤM ĐIỂM
+Các bảng dữ liệu:
+thesis_member_score, score_type
+
+Nghiệp vụ:
+
+Nhập điểm cho từng sinh viên theo từng loại điểm (hội đồng, phản biện, trình bày...)
+
+Quản lý, thống kê điểm từng thành viên, từng đề tài
+
+Lưu điểm, tổng hợp kết quả cuối cùng
+
+8. QUẢN LÝ ĐỢT/ HỌC KỲ/ NIÊN KHÓA
+Các bảng dữ liệu:
+batch, semester, academy_year
+
+Nghiệp vụ:
+
+Tổ chức đợt đăng ký đề tài, đồ án theo học kỳ, năm học
+
+Quản lý đề tài, nhóm, giảng viên theo từng đợt/học kỳ
+
+9. QUẢN TRỊ HỆ THỐNG
+Nghiệp vụ:
+
+Thêm/sửa/xóa người dùng, phân quyền
+
+Quản lý danh mục khoa, ngành, lớp học
+
+Quản lý trạng thái tài khoản, chức năng hệ thống
+
+10. THỐNG KÊ, BÁO CÁO
+Nghiệp vụ:
+
+Thống kê số lượng đề tài, nhóm, sinh viên, giảng viên, kết quả điểm số
+
+Xuất báo cáo tổng hợp theo học kỳ, ngành, lớp, giảng viên hướng dẫn, hội đồng
+
+MAPPING NGHIỆP VỤ - BẢNG DỮ LIỆU
+Nghiệp vụ	Bảng dữ liệu liên quan
+Tài khoản, phân quyền	sys_user, sys_role, sys_user_role
+Thông tin cá nhân, ngành, khoa	student_info, lecturer_info, information, major, department
+Quản lý nhóm, lời mời	group, group_member, invite
+Đề tài, giảng viên	thesis, thesis_group, thesis_lecturer
+Hội đồng chấm	committee, thesis_committee
+Nhiệm vụ, task, comment	mission, task, task_comment
+Chấm điểm	thesis_member_score, score_type
+Đợt, học kỳ, niên khóa	batch, semester, academy_year
+
+QUY TRÌNH NGHIỆP VỤ CHÍNH
+Sinh viên đăng nhập → mời thành viên → tạo nhóm
+
+Nhóm đăng ký đề tài → phân công giảng viên hướng dẫn
+
+Chia nhỏ đề tài thành nhiệm vụ, task → giao việc cho thành viên
+
+Giảng viên, hội đồng phân công, chấm điểm → nhập kết quả điểm
+
+Theo dõi tiến độ, nhận xét, thống kê báo cáo
+
+Quản trị viên điều phối, xuất báo cáo tổng hợp
+
+(Kết thúc phân tích nghiệp vụ)
+

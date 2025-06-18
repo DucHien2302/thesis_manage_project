@@ -1,0 +1,120 @@
+THÔNG TIN DỰ ÁN QUẢN LÝ ĐỀ TÀI ĐỒ ÁN/ KHÓA LUẬN KHOA CNTT
+1. Nền tảng & Công nghệ
+Ứng dụng mobile: Flutter
+
+State management: BLoC library
+
+Database: PostgreSQL
+
+Host: localhost
+
+Port: 5432
+
+Database name: postgres
+
+Owner: postgres
+
+1.1. Xây dựng kiến trúc clean architecture mobile như sau:
+lib:
+	blocs: chứa các blocs hign level của dự án
+	components: chứa các thành phần UI dùng chung (tái sử dụng nhiều lần)
+	screens: chứa các màn hình trong dự án (ví dụ: home, auth,...)
+		ví dụ: screens/home: trong home lại được chia thành 2 thành phần: blocs và views (2 thành phần này là riêng chỉ của home)
+	main.dart: để khởi chạy dự án
+	app.dart: để DI (Provider)
+	app_view: view hiển thị dự án (được gọi bên app.dart)
+	simple_bloc_observer.dart: quản lý các trạng thái state (được khởi tạo trong main.dart)
+1.2. Project mobile này không thể kết nối trực tiếp với csdl là postgres nên phải trung gian qua các API BE (là python FastAPI)
+- Thông tin chi tiết về các API bạn nên đọc bên file: api-quan-ly-khoa-luan.json
+- Các API nào không cần thiết và khi bỏ qua sẽ không ảnh hưởng thì có thể bỏ qua
+- Tuân thủ nghiêm ngặt giữa mobile và API BE
+
+2. Nghiệp vụ chính
+2.1. Quản lý tài khoản, phân quyền
+Đăng ký, đăng nhập hệ thống (vai trò: sinh viên, giảng viên, admin)
+
+Phân quyền truy cập theo vai trò
+
+2.2. Quản lý thông tin cá nhân, khoa, ngành
+Quản lý, cập nhật thông tin sinh viên, giảng viên
+
+Quản lý khoa, ngành, lớp học
+
+2.3. Tạo nhóm sinh viên
+Mời thành viên cùng ngành vào nhóm, chấp nhận/hủy lời mời
+
+Tạo nhóm chính thức khi đủ điều kiện (tối đa 4 thành viên)
+
+Quản lý thành viên, nhóm trưởng
+
+2.4. Đăng ký, phân công, quản lý đề tài
+Nhóm đăng ký đề tài
+
+Thêm, sửa, xóa, phân loại đề tài
+
+Phân công giảng viên hướng dẫn
+
+2.5. Quản lý hội đồng chấm bảo vệ
+Thành lập, phân công hội đồng, chủ tịch
+
+Gán hội đồng cho đề tài
+
+2.6. Quản lý nhiệm vụ, tiến độ
+Giao nhiệm vụ lớn (mission), công việc nhỏ (task) cho thành viên nhóm
+
+Theo dõi, cập nhật tiến độ
+
+Nhận xét, báo cáo công việc
+
+2.7. Chấm điểm đề tài
+Nhập điểm từng sinh viên theo loại điểm (hội đồng, phản biện, trình bày, ...)
+
+Quản lý, tổng hợp kết quả điểm
+
+2.8. Quản lý đợt, học kỳ, niên khóa
+Tổ chức đợt đăng ký đề tài/đồ án theo từng học kỳ, năm học
+
+2.9. Quản trị hệ thống & thống kê, báo cáo
+Quản lý người dùng, phân quyền
+
+Thống kê số lượng đề tài, nhóm, sinh viên, giảng viên, điểm số
+
+Xuất báo cáo tổng hợp theo học kỳ, ngành, lớp, giảng viên, hội đồng
+
+3. Sơ lược cơ sở dữ liệu
+Tên database: qlkhoaluan
+
+Sử dụng PostgreSQL (localhost, port 5432, owner: postgres)
+
+Các bảng chính:
+
+sys_user, sys_role, sys_user_role, sys_function, sys_role_function
+
+student_info, lecturer_info, information, department, major
+
+group, group_member, invite
+
+thesis, thesis_group, thesis_lecturer
+
+committee, thesis_committee
+
+mission, task, task_comment
+
+thesis_member_score, score_type
+
+batch, semester, academy_year
+
+4. Quy trình nghiệp vụ chính
+Sinh viên đăng nhập → mời thành viên → tạo nhóm
+
+Nhóm đăng ký đề tài → phân công giảng viên hướng dẫn
+
+Chia nhỏ đề tài thành nhiệm vụ, task → giao việc cho thành viên
+
+Giảng viên, hội đồng phân công, chấm điểm → nhập kết quả điểm
+
+Theo dõi tiến độ, nhận xét, thống kê, báo cáo
+
+Quản trị viên điều phối, xuất báo cáo tổng hợp
+
+(Kết thúc thông tin tổng hợp dự án)
