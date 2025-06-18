@@ -1,0 +1,7 @@
+Các API trong file api-quan-ly-khoa-luan.json là chưa đầy đủ (hoặc chưa chính xác)
+nên khi thực hiện xây dựng một chức năng nào đó
+hãy tạo ra file api-mobile.txt nội dung file như sau:
+    - Các yêu cầu để viết ra api đó bên BE FaskAPI python (cần cụ thể càng tốt -> để thực hiện chính xác nhất)
+    - Cấu hình router mới. Thêm -mobile để phân biệt
+    - Đặc biệt quan trọng viết làm sao trong project BE FaskAPI không conflict
+code mobile sẽ gọi api mobile vừa tạo

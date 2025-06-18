@@ -51,15 +51,68 @@ class AppConfig {
   // Thesis Types
   static const int thesisTypeCapstone = 1;
   static const int thesisTypeThesis = 2;
-  
-  // Cache Keys
+    // Cache Keys
   static const String tokenKey = "auth_token";
   static const String refreshTokenKey = "refresh_token";
   static const String userInfoKey = "user_info";
+  static const String userTypeKey = "user_type";
 }
 
 class UserRole {
   static const String admin = "ADMIN";
   static const String lecturer = "LECTURER";
   static const String student = "STUDENT";
+}
+
+class Constants {
+  // Authentication
+  static const String accessToken = "access_token";
+  static const String refreshToken = "refresh_token";
+  static const String isLoggedIn = "is_logged_in";
+  
+  // User Information
+  static const String userId = "user_id";
+  static const String userName = "user_name";
+  static const String userType = "user_type";
+  static const String userInfo = "user_info";
+  
+  // Permissions
+  static const String userPermissions = "user_permissions";
+  static const String userRoles = "user_roles";
+  
+  // Features
+  static const String featureGroup = "group";
+  static const String featureThesis = "thesis";
+  static const String featureProfile = "profile";
+  static const String featureAdmin = "admin";
+}
+
+class FunctionPaths {
+  // Admin paths
+  static const String adminDashboard = "/admin/dashboard";
+  static const String adminUsers = "/admin/users";
+  static const String adminRoles = "/admin/roles";
+  
+  // Lecturer paths
+  static const String lecturerTheses = "/lecturer/theses";
+  static const String lecturerDashboard = "/lecturer/dashboard";
+  static const String lecturerStudents = "/lecturer/students";
+  static const String lecturerCommittee = "/lecturer/committee";
+    // Student paths
+  static const String studentDashboard = "/student/dashboard";
+  static const String studentGroupManagement = "/student/group";
+  static const String studentThesisRegistration = "/student/thesis";
+  static const String studentTaskManagement = "/student/tasks";
+  static const String studentProgressTracking = "/student/progress";
+  
+  // Common paths
+  static const String profile = "/profile";
+  static const String settings = "/settings";
+
+  // Additional function paths for drawer menu
+  static const String thesisManagementPath = "/thesis/management";
+  static const String groupManagementPath = "/group/management";
+  static const String userManagementPath = "/user/management";
+  static const String reportPath = "/report";
+  static const String debugPath = "/debug";
 }
