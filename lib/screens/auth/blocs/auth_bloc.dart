@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:thesis_manage_project/repositories/auth_repository.dart';
 import 'package:thesis_manage_project/services/permission_service.dart';
 import 'package:thesis_manage_project/utils/logger.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 
 // Auth Events - Định nghĩa các sự kiện liên quan đến xác thực
 abstract class AuthEvent extends Equatable {
@@ -330,30 +331,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const AuthFailure('Vui lòng nhập tên đăng nhập'));
         return;
       }
-      
-      if (event.password.isEmpty) {
-        emit(const AuthFailure('Vui lòng nhập mật khẩu'));
-        return;
-      }
-      
-      if (event.password != event.confirmPassword) {
-        emit(const AuthFailure('Mật khẩu xác nhận không khớp'));
-        return;
-      }
-      
+      // Không kiểm tra mật khẩu nữa
       // Gọi API đăng ký
       final registerResponse = await _authRepository.register(
         event.username,
-        event.password,
-        event.userType,
+        '', // Không cần mật khẩu
+        AppConfig.userTypeStudent, // Luôn là sinh viên
       );
-      
       // Kiểm tra lỗi đăng ký
       if (registerResponse.containsKey('error')) {
         emit(AuthFailure('Đăng ký thất bại: ${registerResponse['error']}'));
         return;
       }
-
       emit(const RegisterSuccess('Đăng ký thành công! Vui lòng đăng nhập.'));
     } catch (e) {
       _logger.error('Lỗi xử lý đăng ký trong bloc: $e');
