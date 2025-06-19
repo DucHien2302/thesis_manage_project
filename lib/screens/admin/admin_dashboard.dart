@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
+import 'package:thesis_manage_project/screens/admin/admin_lecturer_management.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 
 /// Admin Dashboard - Giao diện dành cho Quản trị viên
@@ -31,7 +32,8 @@ class _AdminDashboardState extends State<AdminDashboard>
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     final userData = authState is Authenticated ? authState.user : {};
-    final userName = userData['user_name'] ?? 'Admin';    return Scaffold(
+    final userName = userData['user_name'] ?? 'Admin';
+    return Scaffold(
       appBar: AppBar(
         title: Text('Quản trị hệ thống - $userName'),
         backgroundColor: AppColors.primary,
@@ -677,57 +679,38 @@ class _AdminDashboardState extends State<AdminDashboard>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Thêm người dùng mới'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Họ tên',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Vai trò',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'admin', child: Text('Quản trị viên')),
-                    DropdownMenuItem(value: 'lecturer', child: Text('Giảng viên')),
-                    DropdownMenuItem(value: 'student', child: Text('Sinh viên')),
-                  ],
-                  onChanged: (value) {},
-                ),
-              ],
-            ),
+          title: const Text('Chọn loại người dùng'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.school, color: AppColors.accent),
+                title: const Text('Giảng viên'),
+                subtitle: const Text('Tạo tài khoản cho giảng viên mới'),
+                onTap: () {
+                  Navigator.pop(context); // Đóng dialog
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (context) => const AdminLecturerManagement(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.person, color: AppColors.info),
+                title: const Text('Sinh viên'),
+                subtitle: const Text('Sinh viên tự đăng ký tài khoản'),
+                enabled: false,
+                onTap: () {},
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Đã thêm người dùng mới')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Thêm'),
+              child: const Text('Đóng'),
             ),
           ],
         );

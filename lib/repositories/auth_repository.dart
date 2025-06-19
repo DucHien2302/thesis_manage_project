@@ -366,6 +366,7 @@ class AuthRepository {
       _logger.error('Lỗi lưu thông tin xác thực: $e');
     }
   }
+  
   /// Lưu thông tin người dùng vào SharedPreferences
   /// 
   /// [userData]: Thông tin người dùng
@@ -383,7 +384,8 @@ class AuthRepository {
       _logger.error('Lỗi lưu thông tin user: $e');
     }
   }
-    /// Xóa thông tin xác thực khỏi SharedPreferences
+  
+  /// Xóa thông tin xác thực khỏi SharedPreferences
   Future<void> _clearAuthData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -415,7 +417,8 @@ class AuthRepository {
       while (payload.length % 4 != 0) {
         payload += '=';
       }
-        // Decode Base64URL
+      
+      // Decode Base64URL
       final normalized = base64Url.normalize(payload);
       final decoded = utf8.decode(base64Url.decode(normalized));
       final payloadMap = json.decode(decoded) as Map<String, dynamic>;
@@ -589,5 +592,31 @@ class AuthRepository {
     const signature = 'mock_signature';
     
     return '$headerEncoded.$payloadEncoded.$signature';
+  }
+
+  /// Đăng ký tài khoản giảng viên (chỉ cho admin)
+  /// 
+  /// [username]: Tên đăng nhập
+  /// [password]: Mật khẩu
+  Future<Map<String, dynamic>> adminRegisterLecturer(
+    String username, 
+    String password,
+  ) async {
+    try {
+      // Đăng ký tài khoản với user_type = 3 (giảng viên)
+      final response = await _apiService.post(
+        ApiConfig.register,
+        body: {
+          'user_name': username,
+          'password': password,
+          'user_type': 3, // Lecturer
+          'is_active': true,
+        },
+      );
+      return response ?? {};
+    } catch (e) {
+      _logger.error('Lỗi đăng ký giảng viên: $e');
+      return {'error': e.toString()};
+    }
   }
 }

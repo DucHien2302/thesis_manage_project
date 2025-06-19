@@ -78,16 +78,12 @@ class _RegisterViewState extends State<RegisterView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
-                  
-                  // Logo or icon
                   Icon(
                     Icons.app_registration,
                     size: 80,
                     color: Theme.of(context).primaryColor,
                   ),
-                  
                   const SizedBox(height: 24),
-                  
                   const Text(
                     'Tạo tài khoản mới',
                     textAlign: TextAlign.center,
@@ -96,9 +92,7 @@ class _RegisterViewState extends State<RegisterView> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
                   const SizedBox(height: 32),
-                  
                   // Username field
                   CustomTextField(
                     controller: _usernameController,
@@ -106,9 +100,7 @@ class _RegisterViewState extends State<RegisterView> {
                     prefixIcon: const Icon(Icons.person),
                     validator: Validators.validateUsername,
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   // Password field
                   CustomTextField(
                     controller: _passwordController,
@@ -125,9 +117,7 @@ class _RegisterViewState extends State<RegisterView> {
                     obscureText: _obscurePassword,
                     validator: Validators.validatePassword,
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   // Confirm password field
                   CustomTextField(
                     controller: _confirmPasswordController,
@@ -144,9 +134,7 @@ class _RegisterViewState extends State<RegisterView> {
                     obscureText: _obscureConfirmPassword,
                     validator: (value) => Validators.validateConfirmPassword(value, _passwordController.text),
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   // User type selection
                   DropdownButtonFormField<int>(
                     decoration: const InputDecoration(
@@ -171,18 +159,14 @@ class _RegisterViewState extends State<RegisterView> {
                       });
                     },
                   ),
-                  
                   const SizedBox(height: 32),
-                  
                   // Register button
                   CustomButton(
                     text: 'Đăng ký',
                     onPressed: _submitRegister,
                     isLoading: state is AuthLoading,
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   // Back to login
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),

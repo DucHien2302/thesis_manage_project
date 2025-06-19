@@ -42,11 +42,10 @@ class AppConfig {
   // App Information
   static const String appName = "Quản lý Đề tài Khóa luận";
   static const String appVersion = "0.1.0";
-  
-  // User Types
+    // User Types
   static const int userTypeAdmin = 1;
-  static const int userTypeLecturer = 2;
-  static const int userTypeStudent = 3;
+  static const int userTypeStudent = 2;
+  static const int userTypeLecturer = 3;
   
   // Thesis Types
   static const int thesisTypeCapstone = 1;
