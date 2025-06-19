@@ -8,6 +8,9 @@ class ApiConfig {
   static const String logout = '/auth/logout';
   static const String me = '/auth/me';
   static const String changePassword = '/auth/change-password';
+  static const String adminChangePassword = '/auth/admin-change-password';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
 
   // User APIs
   static const String users = '/users/';

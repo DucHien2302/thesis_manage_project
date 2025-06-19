@@ -1,0 +1,30 @@
+Cài đặt chức năng theo yêu cầu của bài toán: 
+− Các chức năng hệ thống: 
+    o Đăng nhập, đăng xuất, đổi mật khẩu (mật khẩu phải 
+    được mã hóa bằng hàm băm) 
+    o Cập nhật thông tin người dùng, cấp quyền cho người 
+    dùng: Sinh viên, BCN khoa, Trưởng bộ môn, Giảng 
+    viên, Giáo vụ.
+− Quản lý danh mục đề tài đồ án, khóa luận (đối với sinh 
+viên chỉ hiển thị ds đề tài theo đúng ngành, chuyên ngành, 
+học kỳ, năm học); Danh mục sinh viên, giảng viên. 
+− Sinh viên lập nhóm đăng ký đồ án, khóa luận (web & 
+mobile) 
+    o Mời thành viên vào nhóm 
+    o Tạo nhóm, chuyển đổi nhóm, hủy lời mời. 
+    o Tạo lập nhóm, xác định nhóm trưởng 
+− Sinh viên đăng ký đề tài (web & mobile) 
+− Đề xuất đề tài mới: 
+    o Giảng viên đề xuất đề tài mới (tạo hoặc import excel) 
+    o Bộ môn phân công phản biện đề tài 
+− Duyệt đề tài cấp bộ môn, cấp khoa, có phản hồi chỉnh sửa 
+nếu không duyệt (web & mobeile) 
+− Quản lý tiến độ thực hiện đề tài, kết quả thực hiện đề tài 
+(web & mobile) 
+− Lập hội đồng chấm khóa luận, tổng hợp điểm chấm 
+− Báo cáo thống kê:  
+    o Xuất danh sách đăng ký đề tài của các sinh viên trong 
+    một đợt đăng ký, trong học kỳ; danh sách đề tài hướng 
+    dẫn của từng giảng viên, danh sách hội đồng theo từng 
+    tiểu ban; danh sách đề tài đạt khá trở lên.  
+    o Xuất bảng điểm đồ án, khóa luận nộp phòng đào tạo. 

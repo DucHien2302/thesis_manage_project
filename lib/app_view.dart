@@ -1,85 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
+import 'package:thesis_manage_project/config/theme.dart';
+import 'package:thesis_manage_project/routes.dart';
+import 'package:thesis_manage_project/screens/admin/admin_dashboard.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/auth/views/login_view.dart';
-import 'package:thesis_manage_project/screens/debug/api_test_screen.dart';
-import 'package:thesis_manage_project/screens/home/views/home_view.dart';
+import 'package:thesis_manage_project/screens/dashboard/role_based_dashboard.dart';
+import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
+import 'package:thesis_manage_project/screens/group/group_screen.dart';
+import 'package:thesis_manage_project/screens/group/views/invitations_view.dart';
+import 'package:thesis_manage_project/screens/lecturer/lecturer_dashboard.dart';
+import 'package:thesis_manage_project/screens/student/student_dashboard.dart';
 
 class AppView extends StatelessWidget {
   const AppView({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context) {    return MaterialApp(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: AppColors.primary,
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: AppColors.primary,
-          secondary: AppColors.accent,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,      routes: {
+        AppRoutes.groups: (context) => const GroupScreen(),
+        AppRoutes.invitations: (context) => BlocProvider.value(
+          value: BlocProvider.of<GroupBloc>(context),
+          child: const InvitationsView(),
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textLight,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textLight,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.marginMedium,
-              vertical: AppDimens.marginRegular,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.surface,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-            borderSide: const BorderSide(color: AppColors.primary),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-            borderSide: BorderSide(color: AppColors.primary.withOpacity(0.5)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-            borderSide: const BorderSide(color: AppColors.primary, width: 2),
-          ),
-          contentPadding: const EdgeInsets.all(AppDimens.marginMedium),
-        ),
-      ),      home: Builder(
+        AppRoutes.adminDashboard: (context) => const AdminDashboard(),
+        AppRoutes.lecturerDashboard: (context) => const LecturerDashboard(),
+        AppRoutes.studentDashboard: (context) => const StudentDashboard(),
+      },
+      home: Builder(
         builder: (context) => Scaffold(
-          body: BlocBuilder<AuthBloc, AuthState>(
+          body: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                    behavior: SnackBarBehavior.floating,
+                    action: SnackBarAction(
+                      label: 'Đóng',
+                      textColor: Colors.white,
+                      onPressed: () {},
+                    ),
+                  ),
+                );
+              }
+            },
             builder: (context, state) {
-              // Khi đã xác thực => hiển thị Home
+              // Hiển thị loading spinner khi đang xử lý
+              if (state is AuthLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );              }
+                // Khi đã xác thực => hiển thị Role-based Dashboard
               if (state is Authenticated) {
-                return const HomeView();
+                return const RoleBasedDashboard();
               }
               
               // Khi chưa xác thực => hiển thị Login
               return const LoginView();
             },
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ApiTestScreen(),
-                ),
-              );
-            },
-            tooltip: 'API Test Tool',
-            backgroundColor: AppColors.primary,
-            child: const Icon(Icons.bug_report),
           ),
         ),
       ),
