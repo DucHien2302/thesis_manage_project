@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/models/profile_models.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
 
@@ -15,28 +16,26 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         super(ProfileInitial()) {
     on<LoadProfile>(_onLoadProfile);
     on<SaveProfile>(_onSaveProfile);
-  }
-
-  FutureOr<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
+  }  FutureOr<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
     emit(ProfileLoading());
     try {
       final profile = await _profileRepository.getUserProfile(event.userType);
 
       if (profile.containsKey('error')) {
         // No profile yet - return empty profile
-        if (event.userType == 3) { // Student
+        if (event.userType == AppConfig.userTypeStudent) { // Student (2)
           emit(ProfileLoaded(studentProfile: StudentFullProfileModel.empty(userId: event.userId)));
-        } else if (event.userType == 2) { // Lecturer 
+        } else if (event.userType == AppConfig.userTypeLecturer) { // Lecturer (3)
           emit(ProfileLoaded(lecturerProfile: LecturerFullProfileModel.empty(userId: event.userId)));
         } else {
           emit(const ProfileError('Loại tài khoản không được hỗ trợ'));
         }
       } else {
         // Profile exists
-        if (event.userType == 3) { // Student
+        if (event.userType == AppConfig.userTypeStudent) { // Student (2)
           final studentProfile = StudentFullProfileModel.fromJson(profile);
           emit(ProfileLoaded(studentProfile: studentProfile));
-        } else if (event.userType == 2) { // Lecturer
+        } else if (event.userType == AppConfig.userTypeLecturer) { // Lecturer (3)
           final lecturerProfile = LecturerFullProfileModel.fromJson(profile);
           emit(ProfileLoaded(lecturerProfile: lecturerProfile));
         } else {

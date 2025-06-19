@@ -602,8 +602,7 @@ class AuthRepository {
     String username, 
     String password,
   ) async {
-    try {
-      // Đăng ký tài khoản với user_type = 3 (giảng viên)
+    try {      // Đăng ký tài khoản với user_type = 3 (giảng viên)
       final response = await _apiService.post(
         ApiConfig.register,
         body: {
