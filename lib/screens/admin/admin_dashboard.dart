@@ -32,7 +32,8 @@ class _AdminDashboardState extends State<AdminDashboard>
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     final userData = authState is Authenticated ? authState.user : {};
-    final userName = userData['user_name'] ?? 'Admin';    return Scaffold(
+    final userName = userData['user_name'] ?? 'Admin';
+    return Scaffold(
       appBar: AppBar(
         title: Text('Quản trị hệ thống - $userName'),
         backgroundColor: AppColors.primary,
@@ -671,7 +672,9 @@ class _AdminDashboardState extends State<AdminDashboard>
         duration: Duration(seconds: 2),
       ),
     );
-  }  void _showAddUserDialog() {
+  }
+
+  void _showAddUserDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {

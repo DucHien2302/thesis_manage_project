@@ -35,6 +35,7 @@ class _LoginViewState extends State<LoginView> {
     _passwordController.dispose();
     super.dispose();
   }
+
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
@@ -47,6 +48,30 @@ class _LoginViewState extends State<LoginView> {
             ),
           );
     }
+  }
+
+  Widget _buildQuickLoginButton(String label, int userType, Color color) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : () => _quickLogin(userType),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 10),
+      ),
+    );
+  }
+
+  void _quickLogin(int userType) {
+    context.read<AuthBloc>().add(
+      MockLoginRequested(userType: userType),
+    );
   }
 
   @override
@@ -80,7 +105,8 @@ class _LoginViewState extends State<LoginView> {
         },
         child: SafeArea(
           child: Stack(
-            children: [              // Background gradient with pattern
+            children: [
+              // Background gradient with pattern
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -139,7 +165,8 @@ class _LoginViewState extends State<LoginView> {
                             ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: AppDimens.marginExtraLarge),                      // Login card with animation
+                      const SizedBox(height: AppDimens.marginExtraLarge),
+                      // Login card with animation
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 400),
                         curve: Curves.easeInOutCubic,
@@ -242,7 +269,8 @@ class _LoginViewState extends State<LoginView> {
                                         },
                                   ),
                                   const Text('Nhớ đăng nhập'),
-                                  const Spacer(),                                  TextButton(
+                                  const Spacer(),
+                                  TextButton(
                                     onPressed: _isLoading ? null : () {
                                       Navigator.push(
                                         context,
@@ -256,7 +284,8 @@ class _LoginViewState extends State<LoginView> {
                                 ],
                               ),
                               
-                              const SizedBox(height: AppDimens.marginMedium),                              // Login button
+                              const SizedBox(height: AppDimens.marginMedium),
+                              // Login button
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 height: 50,
@@ -325,10 +354,11 @@ class _LoginViewState extends State<LoginView> {
                               ),
                             ],
                           ),
-                        ),                      ),
+                        ),
+                      ),
                       
                       const SizedBox(height: AppDimens.marginLarge),
-                        // Register text
+                      // Register text
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -348,9 +378,9 @@ class _LoginViewState extends State<LoginView> {
                                     );
                                   },
                             child: const Text('Đăng ký ngay'),
-                          ),                        ],
+                          ),
+                        ],
                       ),
-                      
                     ],
                   ),
                 ),
@@ -358,7 +388,8 @@ class _LoginViewState extends State<LoginView> {
             ],
           ),
         ),
-      ),    );
+      ),
+    );
   }
 }
 

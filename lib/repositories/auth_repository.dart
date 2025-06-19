@@ -366,6 +366,7 @@ class AuthRepository {
       _logger.error('Lỗi lưu thông tin xác thực: $e');
     }
   }
+  
   /// Lưu thông tin người dùng vào SharedPreferences
   /// 
   /// [userData]: Thông tin người dùng
@@ -383,7 +384,8 @@ class AuthRepository {
       _logger.error('Lỗi lưu thông tin user: $e');
     }
   }
-    /// Xóa thông tin xác thực khỏi SharedPreferences
+  
+  /// Xóa thông tin xác thực khỏi SharedPreferences
   Future<void> _clearAuthData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -415,7 +417,8 @@ class AuthRepository {
       while (payload.length % 4 != 0) {
         payload += '=';
       }
-        // Decode Base64URL
+      
+      // Decode Base64URL
       final normalized = base64Url.normalize(payload);
       final decoded = utf8.decode(base64Url.decode(normalized));
       final payloadMap = json.decode(decoded) as Map<String, dynamic>;

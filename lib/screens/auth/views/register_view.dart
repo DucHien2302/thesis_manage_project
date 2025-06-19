@@ -16,27 +16,33 @@ class RegisterView extends StatefulWidget {
 class _RegisterViewState extends State<RegisterView> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  int _selectedUserType = AppConfig.userTypeStudent;
 
   @override
   void dispose() {
     _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
-
+  
   void _submitRegister() {
     if (_formKey.currentState?.validate() ?? false) {
-      final username = _usernameController.text.trim();
       context.read<AuthBloc>().add(
         RegisterRequested(
-          username: username,
-          password: username, // Mật khẩu mặc định là username
-          confirmPassword: username, // Để xác nhận luôn đúng
-          userType: AppConfig.userTypeStudent, // Always register as student
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
+          confirmPassword: _confirmPasswordController.text,
+          userType: _selectedUserType,
         ),
       );
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,16 +78,12 @@ class _RegisterViewState extends State<RegisterView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
-
-                  // Logo or icon
                   Icon(
                     Icons.app_registration,
                     size: 80,
                     color: Theme.of(context).primaryColor,
                   ),
-
                   const SizedBox(height: 24),
-
                   const Text(
                     'Tạo tài khoản mới',
                     textAlign: TextAlign.center,
@@ -90,9 +92,7 @@ class _RegisterViewState extends State<RegisterView> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 32),
-
                   // Username field
                   CustomTextField(
                     controller: _usernameController,
@@ -100,8 +100,66 @@ class _RegisterViewState extends State<RegisterView> {
                     prefixIcon: const Icon(Icons.person),
                     validator: Validators.validateUsername,
                   ),
+                  const SizedBox(height: 16),
+                  // Password field
+                  CustomTextField(
+                    controller: _passwordController,
+                    labelText: 'Mật khẩu',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                    obscureText: _obscurePassword,
+                    validator: Validators.validatePassword,
+                  ),
+                  const SizedBox(height: 16),
+                  // Confirm password field
+                  CustomTextField(
+                    controller: _confirmPasswordController,
+                    labelText: 'Xác nhận mật khẩu',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
+                    obscureText: _obscureConfirmPassword,
+                    validator: (value) => Validators.validateConfirmPassword(value, _passwordController.text),
+                  ),
+                  const SizedBox(height: 16),
+                  // User type selection
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Loại tài khoản',
+                      prefixIcon: Icon(Icons.category),
+                      border: OutlineInputBorder(),
+                    ),
+                    value: _selectedUserType,
+                    items: [
+                      DropdownMenuItem(
+                        value: AppConfig.userTypeStudent,
+                        child: const Text('Sinh viên'),
+                      ),
+                      DropdownMenuItem(
+                        value: AppConfig.userTypeLecturer,
+                        child: const Text('Giảng viên'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedUserType = value ?? AppConfig.userTypeStudent;
+                      });
+                    },
+                  ),
                   const SizedBox(height: 32),
-
                   // Register button
                   CustomButton(
                     text: 'Đăng ký',
@@ -109,7 +167,6 @@ class _RegisterViewState extends State<RegisterView> {
                     isLoading: state is AuthLoading,
                   ),
                   const SizedBox(height: 16),
-
                   // Back to login
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
