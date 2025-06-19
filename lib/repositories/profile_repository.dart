@@ -1,6 +1,7 @@
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/utils/logger.dart';
 import 'package:thesis_manage_project/config/api_config.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 
 /// Repository for managing user profile information
 class ProfileRepository {
@@ -137,15 +138,13 @@ class ProfileRepository {
       _logger.error('Error updating lecturer profile: $e');
       return {'error': e.toString()};
     }
-  }
-
-  /// Get complete user profile based on user type
+  }  /// Get complete user profile based on user type
   Future<Map<String, dynamic>> getUserProfile(int userType) async {
     try {
       switch (userType) {
-        case 2: // Lecturer
+        case AppConfig.userTypeLecturer: // Lecturer (3)
           return await getLecturerProfile();
-        case 3: // Student
+        case AppConfig.userTypeStudent: // Student (2)
           return await getStudentProfile();
         default:
           return {'error': 'Unsupported user type'};
@@ -155,12 +154,10 @@ class ProfileRepository {
       return {'error': e.toString()};
     }
   }
-
   /// Create or update complete user profile based on user type
   Future<Map<String, dynamic>> createOrUpdateProfile(int userType, Map<String, dynamic> data) async {
-    try {
-      switch (userType) {
-        case 2: // Lecturer
+    try {      switch (userType) {
+        case AppConfig.userTypeLecturer: // Lecturer (3)
           final lecturerProfile = await getLecturerProfile();
           if (lecturerProfile.containsKey('error') || 
               !lecturerProfile.containsKey('lecturer_info')) {
@@ -170,7 +167,7 @@ class ProfileRepository {
             // Update existing profile
             return await updateLecturerProfile(data);
           }
-        case 3: // Student
+        case AppConfig.userTypeStudent: // Student (2)
           final studentProfile = await getStudentProfile();
           if (studentProfile.containsKey('error') || 
               !studentProfile.containsKey('student_info')) {

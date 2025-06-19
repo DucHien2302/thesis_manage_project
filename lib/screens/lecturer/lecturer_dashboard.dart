@@ -44,7 +44,7 @@ class _LecturerDashboardState extends State<LecturerDashboard>
     final userData = authState is Authenticated ? authState.user : {};
     final userName = userData['user_name'] ?? 'Giảng viên';    return Scaffold(
       appBar: AppBar(
-        title: Text('Giảng viên - $userName'),
+        title: Text('$userName'),
         backgroundColor: AppColors.info,
         foregroundColor: Colors.white,
         elevation: 0,
