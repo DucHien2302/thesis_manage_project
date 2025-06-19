@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
+import 'package:thesis_manage_project/screens/profile/profile_screen.dart';
 
 /// Lecturer Dashboard - Giao diện dành cho Giảng viên
 class LecturerDashboard extends StatefulWidget {
@@ -14,11 +15,10 @@ class LecturerDashboard extends StatefulWidget {
 class _LecturerDashboardState extends State<LecturerDashboard>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -26,6 +26,18 @@ class _LecturerDashboardState extends State<LecturerDashboard>
     _tabController.dispose();
     super.dispose();
   }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Add a listener to ensure tab controller updates the state
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
@@ -50,24 +62,27 @@ class _LecturerDashboardState extends State<LecturerDashboard>
           indicatorWeight: 3,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-          tabs: const [
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600),          tabs: const [
             Tab(icon: Icon(Icons.dashboard_outlined), text: 'Tổng quan'),
             Tab(icon: Icon(Icons.book_outlined), text: 'Đề tài'),
             Tab(icon: Icon(Icons.group_outlined), text: 'Sinh viên'),
             Tab(icon: Icon(Icons.people_outlined), text: 'Hội đồng'),
             Tab(icon: Icon(Icons.assignment_outlined), text: 'Chấm điểm'),
+            Tab(icon: Icon(Icons.person_outlined), text: 'Hồ sơ'),
           ],
         ),
       ),
       body: TabBarView(
-        controller: _tabController,
-        children: [
+        controller: _tabController,        children: [
           _buildOverviewTab(),
           _buildThesisManagementTab(),
           _buildStudentManagementTab(),
           _buildCommitteeTab(),
           _buildGradingTab(),
+          Builder(builder: (context) {
+            // Create the ProfileScreen with proper context
+            return const ProfileScreen();
+          }),
         ],
       ),
     );
