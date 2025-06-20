@@ -64,33 +64,58 @@ class ProfileRepository {
       return {'error': e.toString()};
     }
   }
-
   /// Create student profile information
   /// 
   /// [data]: Map containing student profile data with information and student_info
   Future<Map<String, dynamic>> createStudentProfile(Map<String, dynamic> data) async {
     try {
+      _logger.debug('Creating student profile with data: $data');
       final response = await _apiService.post(
         ApiConfig.studentProfile,
         body: data,
       );
-      return response ?? {};
+      _logger.debug('Student profile create response: $response');
+      
+      // Even if response is null or empty, consider it successful
+      if (response == null) {
+        return {'success': true, 'message': 'Profile created successfully'};
+      }
+      
+      if (response is Map<String, dynamic>) {
+        return response;
+      }
+      
+      return {'success': true, 'data': response, 'message': 'Profile created successfully'};
     } catch (e) {
       _logger.error('Error creating student profile: $e');
       return {'error': e.toString()};
     }
-  }
-
-  /// Update student profile information
+  }/// Update student profile information
   /// 
   /// [data]: Map containing updated student profile data with information and student_info
   Future<Map<String, dynamic>> updateStudentProfile(Map<String, dynamic> data) async {
     try {
+      _logger.debug('Updating student profile with data: $data');
       final response = await _apiService.put(
         ApiConfig.studentProfile,
         body: data,
       );
-      return response ?? {};
+      _logger.debug('Student profile update response: $response');
+      
+      // Even if response is null or empty, consider it successful
+      // as long as no exception was thrown
+      if (response == null) {
+        _logger.debug('Response is null but no exception - considering successful');
+        return {'success': true, 'message': 'Profile updated successfully'};
+      }
+      
+      // If response is a Map, return it directly
+      if (response is Map<String, dynamic>) {
+        return response;
+      }
+      
+      // For other response types, wrap in success response
+      return {'success': true, 'data': response, 'message': 'Profile updated successfully'};
     } catch (e) {
       _logger.error('Error updating student profile: $e');
       return {'error': e.toString()};
@@ -107,38 +132,64 @@ class ProfileRepository {
       return {'error': e.toString()};
     }
   }
-
   /// Create lecturer profile information
   /// 
   /// [data]: Map containing lecturer profile data with information and lecturer_info
   Future<Map<String, dynamic>> createLecturerProfile(Map<String, dynamic> data) async {
     try {
+      _logger.debug('Creating lecturer profile with data: $data');
       final response = await _apiService.post(
         ApiConfig.lecturerProfile,
         body: data,
       );
-      return response ?? {};
+      _logger.debug('Lecturer profile create response: $response');
+      
+      // Even if response is null or empty, consider it successful
+      if (response == null) {
+        return {'success': true, 'message': 'Profile created successfully'};
+      }
+      
+      if (response is Map<String, dynamic>) {
+        return response;
+      }
+      
+      return {'success': true, 'data': response, 'message': 'Profile created successfully'};
     } catch (e) {
       _logger.error('Error creating lecturer profile: $e');
       return {'error': e.toString()};
     }
   }
-
   /// Update lecturer profile information
   /// 
   /// [data]: Map containing updated lecturer profile data with information and lecturer_info
   Future<Map<String, dynamic>> updateLecturerProfile(Map<String, dynamic> data) async {
     try {
+      _logger.debug('Updating lecturer profile with data: $data');
       final response = await _apiService.put(
         ApiConfig.lecturerProfile,
         body: data,
       );
-      return response ?? {};
+      _logger.debug('Lecturer profile update response: $response');
+      
+      // Even if response is null or empty, consider it successful
+      // as long as no exception was thrown
+      if (response == null) {
+        _logger.debug('Response is null but no exception - considering successful');
+        return {'success': true, 'message': 'Profile updated successfully'};
+      }
+      
+      // If response is a Map, return it directly
+      if (response is Map<String, dynamic>) {
+        return response;
+      }
+      
+      // For other response types, wrap in success response
+      return {'success': true, 'data': response, 'message': 'Profile updated successfully'};
     } catch (e) {
       _logger.error('Error updating lecturer profile: $e');
       return {'error': e.toString()};
     }
-  }  /// Get complete user profile based on user type
+  }/// Get complete user profile based on user type
   Future<Map<String, dynamic>> getUserProfile(int userType) async {
     try {
       switch (userType) {

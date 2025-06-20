@@ -117,7 +117,7 @@ Map<String, dynamic> _$StudentFullProfileModelToJson(
 LecturerFullProfileModel _$LecturerFullProfileModelFromJson(
   Map<String, dynamic> json,
 ) => LecturerFullProfileModel(
-  userId: json['userId'] as String,
+  userId: json['user_id'] as String,
   information: InformationModel.fromJson(
     json['information'] as Map<String, dynamic>,
   ),
@@ -129,7 +129,7 @@ LecturerFullProfileModel _$LecturerFullProfileModelFromJson(
 Map<String, dynamic> _$LecturerFullProfileModelToJson(
   LecturerFullProfileModel instance,
 ) => <String, dynamic>{
-  'userId': instance.userId,
+  'user_id': instance.userId,
   'information': instance.information,
   'lecturerInfo': instance.lecturerInfo,
 };

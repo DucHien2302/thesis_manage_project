@@ -248,6 +248,7 @@ class StudentFullProfileModel extends Equatable {
 
 @JsonSerializable()
 class LecturerFullProfileModel extends Equatable {
+  @JsonKey(name: 'user_id')
   final String userId;
   final InformationModel information;
   final LecturerInfoModel lecturerInfo;
