@@ -17,14 +17,12 @@ class StudentListView extends StatefulWidget {
 class _StudentListViewState extends State<StudentListView>
     with AutomaticKeepAliveClientMixin {
   late StudentRepository _studentRepository;
-  late GroupStateManager _groupStateManager;
   List<StudentModel> _students = [];
   List<StudentModel> _filteredStudents = [];
   bool _isLoading = true;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _sentInvites = <String>{};
-  bool _showGroupBanner = true;
 
   @override
   bool get wantKeepAlive => true;
@@ -33,18 +31,8 @@ class _StudentListViewState extends State<StudentListView>
   void initState() {
     super.initState();
     _studentRepository = StudentRepository(apiService: ApiService());
-    _groupStateManager = GroupStateManager();
     _loadStudents();
   }
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Refresh when tab becomes active
-    if (mounted && !_isLoading) {
-      _refreshGroupInfo();
-    }
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -90,26 +78,6 @@ class _StudentListViewState extends State<StudentListView>
         );
       }
     }
-  }
-
-  List<StudentModel> _filterAvailableStudents(List<StudentModel> allStudents) {
-    final currentGroup = _groupStateManager.currentUserGroup;
-    if (currentGroup == null) {
-      return allStudents;
-    }
-
-    // Get list of member IDs in current user's group
-    final Set<String> memberIds = currentGroup.members
-        .map((member) => member.userId)
-        .toSet();
-
-    // Filter out students who are already in the group
-    return allStudents.where((student) => !memberIds.contains(student.id)).toList();
-  }
-
-  /// Check if current user is the group leader
-  bool get _isCurrentUserGroupLeader {
-    return _groupStateManager.isCurrentUserGroupLeader;
   }
 
   void _filterStudents(String query) {
@@ -224,8 +192,8 @@ class _StudentListViewState extends State<StudentListView>
                   horizontal: AppDimens.marginMedium,
                   vertical: AppDimens.marginMedium,
                 ),
-                onChanged: _filterStudents,
               ),
+              onChanged: _filterStudents,
             ),
           ),
           // Results Count
@@ -304,7 +272,7 @@ class _StudentListViewState extends State<StudentListView>
             const SizedBox(height: AppDimens.marginMedium),
             Text(
               _searchQuery.isEmpty
-                  ? 'Không có sinh viên khả dụng'
+                  ? 'Không có sinh viên nào'
                   : 'Không tìm thấy sinh viên nào',
               style: const TextStyle(
                 fontSize: 18,
@@ -343,6 +311,7 @@ class _StudentListViewState extends State<StudentListView>
       ),
     );
   }
+
   Widget _buildStudentCard(StudentModel student) {
     final bool hasInvited = _sentInvites.contains(student.id);
 
