@@ -20,57 +20,24 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _lecturerCodeController = TextEditingController();
-  final _titleController = TextEditingController();
-  
-  bool _isLoading = false;
+    bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  int _selectedDepartment = 1; // Default department
-  
-  List<Map<String, dynamic>> _departments = []; // Department list
   List<Map<String, dynamic>> _lecturers = []; // List of lecturers
   bool _isLoadingUsers = true;
-
   @override
   void initState() {
     super.initState();
     _authRepository = AuthRepository(apiService: _apiService);
-    _loadDepartments();
     _loadLecturers();
   }
-
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _lecturerCodeController.dispose();
-    _titleController.dispose();
     super.dispose();
   }
-
-  Future<void> _loadDepartments() async {
-    try {
-      final response = await _apiService.get('/theses/getall/department/g');
-      if (response != null) {
-        setState(() {
-          _departments = List<Map<String, dynamic>>.from(response);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể tải danh sách khoa: $e')),
-      );
-    }
-  }
-
   Future<void> _loadLecturers() async {
     try {
       setState(() {
@@ -97,31 +64,13 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
   Future<void> _registerLecturer() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
-    }
-
-    setState(() {
+    }    setState(() {
       _isLoading = true;
     });
 
     try {
-      // Prepare lecturer info
-      final lecturerInfo = {
-        'information': {
-          'first_name': _firstNameController.text,
-          'last_name': _lastNameController.text,
-          'date_of_birth': DateTime.now().toIso8601String(), // Default date
-          'gender': 0, // Default gender
-          'address': 'Chưa cập nhật',
-          'tel_phone': 'Chưa cập nhật',
-        },
-        'lecturer_info': {
-          'lecturer_code': _lecturerCodeController.text,
-          'department': _selectedDepartment,
-          'title': _titleController.text,
-          'email': _emailController.text,
-        }
-      };
-
+      // TODO: Include lecturer additional info in API call
+      // For now, only username and password are sent to the API
       final result = await _authRepository.adminRegisterLecturer(
         _usernameController.text,
         _passwordController.text,
@@ -148,17 +97,11 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
               backgroundColor: Colors.green,
             ),
           );
-          
-          // Reset form
+            // Reset form
           _formKey.currentState?.reset();
           _usernameController.clear();
           _passwordController.clear();
           _confirmPasswordController.clear();
-          _firstNameController.clear();
-          _lastNameController.clear();
-          _emailController.clear();
-          _lecturerCodeController.clear();
-          _titleController.clear();
           
           // Refresh lecturers list
           _loadLecturers();
@@ -178,22 +121,52 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
         );
       }
     }
-  }
-
-  // Simple validation function for required fields
-  String? _validateRequired(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Trường này không được để trống';
+  }  // Helper method to safely get lecturer code
+  String _getLecturerCode(Map<String, dynamic> lecturer) {
+    // Dựa vào dữ liệu thực tế, sử dụng user_name làm mã giảng viên
+    if (lecturer.containsKey('user_name') && lecturer['user_name'] != null) {
+      String value = lecturer['user_name'].toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
     }
-    return null;
+    
+    // Fallback: sử dụng ID nếu không có user_name
+    if (lecturer.containsKey('id') && lecturer['id'] != null) {
+      String id = lecturer['id'].toString();
+      // Lấy 8 ký tự đầu của UUID làm mã
+      if (id.length >= 8) {
+        return id.substring(0, 8).toUpperCase();
+      }
+    }
+    
+    return 'Chưa có';
   }
 
+  // Helper method to safely get user initials
+  String _getInitials(Map<String, dynamic> lecturer) {
+    String firstName = lecturer['first_name']?.toString() ?? '';
+    String lastName = lecturer['last_name']?.toString() ?? '';
+    
+    String firstInitial = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'N';
+    String lastInitial = lastName.isNotEmpty ? lastName[0].toUpperCase() : 'A';
+    
+    return firstInitial + lastInitial;  }
+
+  // Helper method to safely get full name
+  String _getFullName(Map<String, dynamic> lecturer) {
+    String firstName = lecturer['first_name']?.toString() ?? '';
+    String lastName = lecturer['last_name']?.toString() ?? '';
+    
+    if (firstName.isEmpty && lastName.isEmpty) {
+      return 'Chưa có tên';
+    }
+    
+    return '$firstName $lastName'.trim();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quản lý người dùng'),
-      ),
       body: DefaultTabController(
         length: 2,
         child: Column(
@@ -280,96 +253,7 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
               ),
               obscureText: _obscureConfirmPassword,
               validator: (value) => Validators.validateConfirmPassword(value, _passwordController.text),
-            ),
-            
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            const Text(
-              'Thông tin giảng viên',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // First name
-            CustomTextField(
-              controller: _firstNameController,
-              labelText: 'Họ',
-              prefixIcon: const Icon(Icons.person_outline),
-              validator: _validateRequired,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Last name
-            CustomTextField(
-              controller: _lastNameController,
-              labelText: 'Tên',
-              prefixIcon: const Icon(Icons.person_outline),
-              validator: _validateRequired,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Lecturer code
-            CustomTextField(
-              controller: _lecturerCodeController,
-              labelText: 'Mã giảng viên',
-              prefixIcon: const Icon(Icons.badge),
-              validator: _validateRequired,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Email
-            CustomTextField(
-              controller: _emailController,
-              labelText: 'Email',
-              keyboardType: TextInputType.emailAddress,
-              prefixIcon: const Icon(Icons.email),
-              validator: Validators.validateEmail,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Title
-            CustomTextField(
-              controller: _titleController,
-              labelText: 'Chức danh',
-              prefixIcon: const Icon(Icons.work),
-              validator: _validateRequired,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Department
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(
-                labelText: 'Khoa',
-                prefixIcon: Icon(Icons.business),
-                border: OutlineInputBorder(),
-              ),
-              value: _selectedDepartment,
-              items: _departments.map((dept) {
-                return DropdownMenuItem<int>(
-                  value: dept['id'],
-                  child: Text(dept['name']),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedDepartment = value ?? 1;
-                });
-              },
-              validator: (value) {
-                if (value == null) return 'Vui lòng chọn khoa';
-                return null;
-              },
-            ),
-            
+            ),            
             const SizedBox(height: 32),
             
             // Register button
@@ -395,8 +279,7 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
     
     return ListView.builder(
       padding: const EdgeInsets.all(8.0),
-      itemCount: _lecturers.length,
-      itemBuilder: (context, index) {
+      itemCount: _lecturers.length,      itemBuilder: (context, index) {
         final lecturer = _lecturers[index];
         
         String departmentName = 'Chưa xác định';
@@ -407,21 +290,19 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
         
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 4.0),
-          child: ListTile(
+          child: ListTile(            
             title: Text(
-              '${lecturer['first_name']} ${lecturer['last_name']}',
+              _getFullName(lecturer),
               style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
+            ),            subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Mã GV: ${lecturer['lecturer_code']}'),
-                Text('Email: ${lecturer['email']}'),
+                Text('Tên đăng nhập: ${_getLecturerCode(lecturer)}'),
+                Text('Email: ${lecturer['email'] ?? 'Chưa có'}'),
                 Text('Khoa: $departmentName'),
               ],
-            ),
-            leading: CircleAvatar(
-              child: Text(lecturer['first_name'][0] + lecturer['last_name'][0]),
+            ),leading: CircleAvatar(
+              child: Text(_getInitials(lecturer)),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,

@@ -63,33 +63,33 @@ Map<String, dynamic> _$StudentInfoModelToJson(StudentInfoModel instance) =>
 LecturerInfoModel _$LecturerInfoModelFromJson(Map<String, dynamic> json) =>
     LecturerInfoModel(
       id: json['id'] as String?,
-      userId: json['userId'] as String?,
-      lecturerCode: json['lecturerCode'] as String,
+      userId: json['user_id'] as String?,
+      lecturerCode: json['lecturer_code'] as String,
       department: (json['department'] as num).toInt(),
       title: json['title'] as String,
       email: json['email'] as String,
-      departmentName: json['departmentName'] as String?,
+      departmentName: json['department_name'] as String?,
       createDatetime:
-          json['createDatetime'] == null
+          json['create_datetime'] == null
               ? null
-              : DateTime.parse(json['createDatetime'] as String),
+              : DateTime.parse(json['create_datetime'] as String),
       updateDatetime:
-          json['updateDatetime'] == null
+          json['update_datetime'] == null
               ? null
-              : DateTime.parse(json['updateDatetime'] as String),
+              : DateTime.parse(json['update_datetime'] as String),
     );
 
 Map<String, dynamic> _$LecturerInfoModelToJson(LecturerInfoModel instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'userId': instance.userId,
-      'lecturerCode': instance.lecturerCode,
+      'user_id': instance.userId,
+      'lecturer_code': instance.lecturerCode,
       'department': instance.department,
       'title': instance.title,
       'email': instance.email,
-      'departmentName': instance.departmentName,
-      'createDatetime': instance.createDatetime?.toIso8601String(),
-      'updateDatetime': instance.updateDatetime?.toIso8601String(),
+      'department_name': instance.departmentName,
+      'create_datetime': instance.createDatetime?.toIso8601String(),
+      'update_datetime': instance.updateDatetime?.toIso8601String(),
     };
 
 StudentFullProfileModel _$StudentFullProfileModelFromJson(
@@ -122,7 +122,7 @@ LecturerFullProfileModel _$LecturerFullProfileModelFromJson(
     json['information'] as Map<String, dynamic>,
   ),
   lecturerInfo: LecturerInfoModel.fromJson(
-    json['lecturerInfo'] as Map<String, dynamic>,
+    json['lecturer_info'] as Map<String, dynamic>,
   ),
 );
 
@@ -131,5 +131,5 @@ Map<String, dynamic> _$LecturerFullProfileModelToJson(
 ) => <String, dynamic>{
   'user_id': instance.userId,
   'information': instance.information,
-  'lecturerInfo': instance.lecturerInfo,
+  'lecturer_info': instance.lecturerInfo,
 };

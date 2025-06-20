@@ -132,7 +132,7 @@ class _MyGroupsViewState extends State<MyGroupsView> {
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             title: Text(
-              group.name,
+              group.name ?? 'Nhóm',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             subtitle: Padding(

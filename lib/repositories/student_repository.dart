@@ -6,53 +6,62 @@ class StudentRepository {
 
   StudentRepository({required ApiService apiService}) : _apiService = apiService;
 
-  /// Get list of all students
+  /// Get list of all students from the same major as current user
   Future<List<StudentModel>> getAllStudents() async {
     try {
-      final response = await _apiService.get('/students');
+      final response = await _apiService.get('/student-profile/gett-all');
       final List<dynamic> data = response;
       return data.map((student) => StudentModel.fromJson(student)).toList();
     } catch (e) {
-      // If API is not available, return empty list
       print('Error fetching students: $e');
-      return [];
+      rethrow;
     }
   }
 
   /// Get students by major
   Future<List<StudentModel>> getStudentsByMajor(String majorId) async {
     try {
-      final response = await _apiService.get('/students/major/$majorId');
+      // This endpoint might not exist in the API, using the general endpoint
+      final response = await _apiService.get('/student-profile/gett-all');
       final List<dynamic> data = response;
-      return data.map((student) => StudentModel.fromJson(student)).toList();
+      final students = data.map((student) => StudentModel.fromJson(student)).toList();
+      
+      // Filter by major ID
+      return students.where((student) => student.studentInfo.majorId == majorId).toList();
     } catch (e) {
-      // If API is not available, return empty list
       print('Error fetching students by major: $e');
-      return [];
+      rethrow;
     }
   }
 
   /// Search students by name or student code
   Future<List<StudentModel>> searchStudents(String query) async {
     try {
-      final response = await _apiService.get('/students/search?q=$query');
-      final List<dynamic> data = response;
-      return data.map((student) => StudentModel.fromJson(student)).toList();
+      // Get all students and filter locally since search endpoint might not exist
+      final students = await getAllStudents();
+      final lowerQuery = query.toLowerCase();
+      
+      return students.where((student) => 
+        student.fullName.toLowerCase().contains(lowerQuery) ||
+        student.studentCode.toLowerCase().contains(lowerQuery)
+      ).toList();
     } catch (e) {
-      // If API is not available, return empty list
       print('Error searching students: $e');
-      return [];
+      rethrow;
     }
   }
 
   /// Get student by ID
   Future<StudentModel?> getStudentById(String id) async {
     try {
-      final response = await _apiService.get('/students/$id');
-      return StudentModel.fromJson(response);
+      // Get all students and find by ID since individual get might not exist
+      final students = await getAllStudents();
+      return students.firstWhere(
+        (student) => student.id == id,
+        orElse: () => throw Exception('Student not found'),
+      );
     } catch (e) {
-      print('Error fetching student by id: $e');
-      return null;
+      print('Error getting student by ID: $e');      return null;
     }
   }
 }

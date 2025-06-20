@@ -138,13 +138,18 @@ class StudentInfoModel extends Equatable {
 @JsonSerializable()
 class LecturerInfoModel extends Equatable {
   final String? id;
+  @JsonKey(name: 'user_id')
   final String? userId;
+  @JsonKey(name: 'lecturer_code')
   final String lecturerCode;
   final int department;
   final String title;
   final String email;
+  @JsonKey(name: 'department_name')
   final String? departmentName;
+  @JsonKey(name: 'create_datetime')
   final DateTime? createDatetime;
+  @JsonKey(name: 'update_datetime')
   final DateTime? updateDatetime;
 
   const LecturerInfoModel({
@@ -251,6 +256,7 @@ class LecturerFullProfileModel extends Equatable {
   @JsonKey(name: 'user_id')
   final String userId;
   final InformationModel information;
+  @JsonKey(name: 'lecturer_info')
   final LecturerInfoModel lecturerInfo;
 
   const LecturerFullProfileModel({

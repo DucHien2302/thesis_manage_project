@@ -175,7 +175,7 @@ class MemberAddedState extends GroupState {
 class MemberRemovedState extends GroupState {}
 
 class GroupMembersLoadedState extends GroupState {
-  final List<GroupMemberModel> members;
+  final List<MemberDetailModel> members;
 
   const GroupMembersLoadedState({required this.members});
 
@@ -188,12 +188,12 @@ class LeadershipTransferredState extends GroupState {}
 class InviteSentState extends GroupState {}
 
 class InvitesLoadedState extends GroupState {
-  final List<InviteModel> invites;
+  final AllInvitesResponse allInvites;
 
-  const InvitesLoadedState({required this.invites});
+  const InvitesLoadedState({required this.allInvites});
 
   @override
-  List<Object?> get props => [invites];
+  List<Object?> get props => [allInvites];
 }
 
 class InviteActionSuccessState extends GroupState {
@@ -288,12 +288,11 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-
   Future<void> _onGetGroupMembers(GetGroupMembersEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
-      final members = await groupRepository.getGroupMembers(event.groupId);
-      emit(GroupMembersLoadedState(members: members));
+      final groupDetails = await groupRepository.getGroupDetails(event.groupId);
+      emit(GroupMembersLoadedState(members: groupDetails.members));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
@@ -312,22 +311,20 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-
   Future<void> _onSendInvite(SendInviteEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
-      await groupRepository.sendInvite(event.receiverId, event.groupId);
+      await groupRepository.sendInvite(event.receiverId);
       emit(InviteSentState());
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-
   Future<void> _onGetMyInvites(GetMyInvitesEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
-      final invites = await groupRepository.getMyInvites();
-      emit(InvitesLoadedState(invites: invites));
+      final allInvites = await groupRepository.getAllMyInvites();
+      emit(InvitesLoadedState(allInvites: allInvites));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
@@ -375,11 +372,10 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-
   Future<void> _onLeaveGroup(LeaveGroupEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
-      await groupRepository.leaveGroup(event.groupId);
+      await groupRepository.deleteGroup(event.groupId);
       emit(GroupLeftState());
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));

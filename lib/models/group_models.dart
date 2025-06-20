@@ -6,13 +6,14 @@ part 'group_models.g.dart';
 @JsonSerializable()
 class GroupModel extends Equatable {
   final String id;
-  final String name;
+  final String? name;
+  @JsonKey(name: 'leader_id')
   final String leaderId;
-  final List<GroupMemberModel> members;
+  final List<MemberDetailModel> members;
 
   const GroupModel({
     required this.id,
-    required this.name,
+    this.name,
     required this.leaderId,
     this.members = const [],
   });
@@ -25,16 +26,42 @@ class GroupModel extends Equatable {
 }
 
 @JsonSerializable()
-class GroupMemberModel extends Equatable {
+class MemberDetailModel extends Equatable {
+  @JsonKey(name: 'user_id')
   final String userId;
+  @JsonKey(name: 'full_name')
   final String fullName;
+  @JsonKey(name: 'student_code')
   final String studentCode;
+  @JsonKey(name: 'is_leader')
   final bool isLeader;
 
-  const GroupMemberModel({
+  const MemberDetailModel({
     required this.userId,
     required this.fullName,
     required this.studentCode,
+    this.isLeader = false,
+  });
+
+  factory MemberDetailModel.fromJson(Map<String, dynamic> json) => _$MemberDetailModelFromJson(json);
+  Map<String, dynamic> toJson() => _$MemberDetailModelToJson(this);
+
+  @override
+  List<Object?> get props => [userId, fullName, studentCode, isLeader];
+}
+
+@JsonSerializable()
+class GroupMemberModel extends Equatable {
+  @JsonKey(name: 'group_id')
+  final String groupId;
+  @JsonKey(name: 'student_id')
+  final String studentId;
+  @JsonKey(name: 'is_leader')
+  final bool isLeader;
+
+  const GroupMemberModel({
+    required this.groupId,
+    required this.studentId,
     this.isLeader = false,
   });
 
@@ -42,7 +69,7 @@ class GroupMemberModel extends Equatable {
   Map<String, dynamic> toJson() => _$GroupMemberModelToJson(this);
 
   @override
-  List<Object?> get props => [userId, fullName, studentCode, isLeader];
+  List<Object?> get props => [groupId, studentId, isLeader];
 }
 
 @JsonSerializable()
@@ -62,7 +89,9 @@ class GroupCreateRequest extends Equatable {
 
 @JsonSerializable()
 class GroupMemberAddRequest extends Equatable {
+  @JsonKey(name: 'student_id')
   final String studentId;
+  @JsonKey(name: 'is_leader')
   final bool isLeader;
 
   const GroupMemberAddRequest({
@@ -77,48 +106,99 @@ class GroupMemberAddRequest extends Equatable {
   List<Object?> get props => [studentId, isLeader];
 }
 
+// Invite models based on API response
 @JsonSerializable()
-class InviteModel extends Equatable {
+class InviteDetailModel extends Equatable {
   final String id;
-  final String senderId;
-  final String receiverId;
-  final String? groupId;
-  final String senderName;
-  final String? groupName;
-  final int status; // 1: pending, 2: accepted, 3: rejected, 4: revoked
+  final int status;
+  final UserInInviteModel sender;
+  final UserInInviteModel receiver;
+  final GroupInInviteModel? group;
 
-  const InviteModel({
+  const InviteDetailModel({
     required this.id,
-    required this.senderId,
-    required this.receiverId,
-    this.groupId,
-    required this.senderName,
-    this.groupName,
     required this.status,
+    required this.sender,
+    required this.receiver,
+    this.group,
   });
 
-  factory InviteModel.fromJson(Map<String, dynamic> json) => _$InviteModelFromJson(json);
-  Map<String, dynamic> toJson() => _$InviteModelToJson(this);
+  factory InviteDetailModel.fromJson(Map<String, dynamic> json) => _$InviteDetailModelFromJson(json);
+  Map<String, dynamic> toJson() => _$InviteDetailModelToJson(this);
 
   @override
-  List<Object?> get props => [id, senderId, receiverId, groupId, senderName, groupName, status];
+  List<Object?> get props => [id, status, sender, receiver, group];
+}
+
+@JsonSerializable()
+class UserInInviteModel extends Equatable {
+  final String id;
+  @JsonKey(name: 'full_name')
+  final String fullName;
+  @JsonKey(name: 'student_code')
+  final String? studentCode;
+
+  const UserInInviteModel({
+    required this.id,
+    required this.fullName,
+    this.studentCode,
+  });
+
+  factory UserInInviteModel.fromJson(Map<String, dynamic> json) => _$UserInInviteModelFromJson(json);
+  Map<String, dynamic> toJson() => _$UserInInviteModelToJson(this);
+
+  @override
+  List<Object?> get props => [id, fullName, studentCode];
+}
+
+@JsonSerializable()
+class GroupInInviteModel extends Equatable {
+  final String id;
+  final String? name;
+
+  const GroupInInviteModel({
+    required this.id,
+    this.name,
+  });
+
+  factory GroupInInviteModel.fromJson(Map<String, dynamic> json) => _$GroupInInviteModelFromJson(json);
+  Map<String, dynamic> toJson() => _$GroupInInviteModelToJson(this);
+
+  @override
+  List<Object?> get props => [id, name];
+}
+
+@JsonSerializable()
+class AllInvitesResponse extends Equatable {
+  @JsonKey(name: 'received_invites')
+  final List<InviteDetailModel> receivedInvites;
+  @JsonKey(name: 'sent_invites')
+  final List<InviteDetailModel> sentInvites;
+
+  const AllInvitesResponse({
+    required this.receivedInvites,
+    required this.sentInvites,
+  });
+
+  factory AllInvitesResponse.fromJson(Map<String, dynamic> json) => _$AllInvitesResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$AllInvitesResponseToJson(this);
+
+  @override
+  List<Object?> get props => [receivedInvites, sentInvites];
 }
 
 @JsonSerializable()
 class InviteCreateRequest extends Equatable {
+  @JsonKey(name: 'receiver_id')
   final String receiverId;
-  final String? groupId;
-  final int status;
 
   const InviteCreateRequest({
     required this.receiverId,
-    this.groupId,
-    this.status = 1,
   });
 
   factory InviteCreateRequest.fromJson(Map<String, dynamic> json) => _$InviteCreateRequestFromJson(json);
   Map<String, dynamic> toJson() => _$InviteCreateRequestToJson(this);
 
   @override
-  List<Object?> get props => [receiverId, groupId, status];
+  List<Object?> get props => [receiverId];
 }
