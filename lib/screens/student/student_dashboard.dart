@@ -6,11 +6,7 @@ import 'package:thesis_manage_project/screens/profile/profile_screen.dart';
 import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
-import 'package:thesis_manage_project/widgets/custom_navigation_bar.dart';
-import 'package:thesis_manage_project/widgets/custom_app_bar.dart';
-import 'package:thesis_manage_project/widgets/page_transition_widget.dart';
 import 'package:thesis_manage_project/widgets/modern_card.dart';
-import 'package:thesis_manage_project/widgets/floating_action_button_widget.dart' as fab;
 import 'package:thesis_manage_project/widgets/ui_components.dart';
 
 class StudentDashboard extends StatefulWidget {
@@ -22,43 +18,58 @@ class StudentDashboard extends StatefulWidget {
 
 class _StudentDashboardState extends State<StudentDashboard> {
   int _currentIndex = 0;
+  String _currentPageTitle = 'Tổng quan';
 
-  final List<NavigationItem> _navigationItems = [
-    NavigationItem(
-      icon: Icons.dashboard_outlined,
-      activeIcon: Icons.dashboard,
-      label: 'Tổng quan',
-    ),
-    NavigationItem(
-      icon: Icons.group_outlined,
-      activeIcon: Icons.group,
-      label: 'Nhóm',
-    ),
-    NavigationItem(
-      icon: Icons.assignment_outlined,
-      activeIcon: Icons.assignment,
-      label: 'Đề tài',
-    ),
-    NavigationItem(
-      icon: Icons.task_outlined,
-      activeIcon: Icons.task,
-      label: 'Nhiệm vụ',
-    ),
-    NavigationItem(
-      icon: Icons.bar_chart_outlined,
-      activeIcon: Icons.bar_chart,
-      label: 'Tiến độ',
-    ),
-    NavigationItem(
-      icon: Icons.person_outlined,
-      activeIcon: Icons.person,
-      label: 'Hồ sơ',
-    ),
-  ];
-
-  @override
+  final List<Map<String, dynamic>> _menuItems = [
+    {
+      'icon': Icons.dashboard_outlined,
+      'activeIcon': Icons.dashboard,
+      'title': 'Tổng quan',
+      'pageTitle': 'Tổng quan',
+    },
+    {
+      'icon': Icons.group_outlined,
+      'activeIcon': Icons.group,
+      'title': 'Nhóm',
+      'pageTitle': 'Nhóm của tôi',
+    },
+    {
+      'icon': Icons.assignment_outlined,
+      'activeIcon': Icons.assignment,
+      'title': 'Đề tài',
+      'pageTitle': 'Đề tài',
+    },
+    {
+      'icon': Icons.task_outlined,
+      'activeIcon': Icons.task,
+      'title': 'Nhiệm vụ',
+      'pageTitle': 'Nhiệm vụ',
+    },
+    {
+      'icon': Icons.bar_chart_outlined,
+      'activeIcon': Icons.bar_chart,
+      'title': 'Tiến độ',
+      'pageTitle': 'Tiến độ',
+    },
+    {
+      'icon': Icons.person_outlined,
+      'activeIcon': Icons.person,
+      'title': 'Hồ sơ',
+      'pageTitle': 'Hồ sơ',
+    },
+  ];  @override
   void initState() {
     super.initState();
+    // Load profile data after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is Authenticated) {
+        context.read<ProfileBloc>().add(LoadProfile(
+          userType: authState.user['user_type'] ?? 0,
+          userId: authState.user['id'] ?? '',
+        ));
+      }
+    });
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -100,14 +111,23 @@ class _StudentDashboardState extends State<StudentDashboard> {
         );
       },
     );
-  }
-  @override
+  }  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: GradientAppBar(
-        title: _getPageTitle(),
-        gradientColors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+      appBar: AppBar(
+        title: Text(_currentPageTitle),
+        backgroundColor: AppColors.success,
+        foregroundColor: Colors.white,
         elevation: 4,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -123,19 +143,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ],
       ),
-      body: PageTransitionWidget(
+      drawer: _buildDrawer(),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
         child: _buildCurrentPage(),
-      ),
-      bottomNavigationBar: CustomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: _navigationItems,
-      ),      floatingActionButton: _currentIndex == 0 
-          ? fab.FloatingActionButtonWidget(
+      ),floatingActionButton: _currentIndex == 0 
+          ? FloatingActionButton.extended(
               onPressed: () {
                 showDialog(
                   context: context,
@@ -163,31 +176,170 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ),
                 );
               },
-              icon: Icons.add,
-              tooltip: 'Tạo mới',
+              icon: const Icon(Icons.add),
+              label: const Text('Tạo mới'),
               backgroundColor: AppColors.success,
+              foregroundColor: Colors.white,
             )
           : null,
+    );  }
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Column(
+        children: [          // Drawer Header với thông tin từ API
+          BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, profileState) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.school,
+                          size: 28,
+                          color: AppColors.success,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (profileState is ProfileLoaded && profileState.studentProfile != null) ...[
+                              Text(
+                                '${profileState.studentProfile!.information.lastName} ${profileState.studentProfile!.information.firstName}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'MSSV: ${profileState.studentProfile!.studentInfo.studentCode}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                profileState.studentProfile!.studentInfo.majorName ?? 'Chưa cập nhật ngành',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ] else ...[
+                              const Text(
+                                'Sinh viên',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Đang tải thông tin...',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          
+          // Menu Items với Flexible thay vì Expanded
+          Flexible(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shrinkWrap: true,
+              itemCount: _menuItems.length,
+              itemBuilder: (context, index) {
+                final item = _menuItems[index];
+                final isSelected = index == _currentIndex;
+                
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected ? AppColors.success.withOpacity(0.1) : null,
+                  ),
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    leading: Icon(
+                      isSelected ? item['activeIcon'] : item['icon'],
+                      size: 22,
+                      color: isSelected ? AppColors.success : Colors.grey[600],
+                    ),
+                    title: Text(
+                      item['title'],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? AppColors.success : Colors.grey[800],
+                      ),
+                    ),                    onTap: () {
+                      setState(() {
+                        _currentIndex = index;
+                        _currentPageTitle = item['pageTitle'];
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          
+          // Footer - Divider và Logout
+          const Divider(height: 1),
+          ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Icon(Icons.logout, color: AppColors.error, size: 22),
+            title: Text(
+              'Đăng xuất',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.error,
+              ),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _showLogoutDialog(context);
+            },
+          ),
+        ],
+      ),
     );
-  }
-
-  String _getPageTitle() {
-    switch (_currentIndex) {
-      case 0:
-        return 'Tổng quan';
-      case 1:
-        return 'Nhóm của tôi';
-      case 2:
-        return 'Đề tài';
-      case 3:
-        return 'Nhiệm vụ';
-      case 4:
-        return 'Tiến độ';
-      case 5:
-        return 'Hồ sơ';
-      default:
-        return 'Dashboard Sinh viên';
-    }
   }
 
   Widget _buildCurrentPage() {

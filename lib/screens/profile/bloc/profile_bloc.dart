@@ -21,23 +21,21 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final profile = await _profileRepository.getUserProfile(event.userType);
 
-      if (profile.containsKey('error')) {
-        // No profile yet - return empty profile
+      if (profile.containsKey('error')) {        // No profile yet - return empty profile
         if (event.userType == AppConfig.userTypeStudent) { // Student (2)
-          emit(ProfileLoaded(studentProfile: StudentFullProfileModel.empty(userId: event.userId)));
+          emit(ProfileLoaded(studentProfile: StudentFullProfileModel.empty(userId: event.userId), lecturerProfile: null));
         } else if (event.userType == AppConfig.userTypeLecturer) { // Lecturer (3)
-          emit(ProfileLoaded(lecturerProfile: LecturerFullProfileModel.empty(userId: event.userId)));
+          emit(ProfileLoaded(studentProfile: null, lecturerProfile: LecturerFullProfileModel.empty(userId: event.userId)));
         } else {
           emit(const ProfileError('Loại tài khoản không được hỗ trợ'));
-        }
-      } else {
+        }} else {
         // Profile exists
         if (event.userType == AppConfig.userTypeStudent) { // Student (2)
           final studentProfile = StudentFullProfileModel.fromJson(profile);
-          emit(ProfileLoaded(studentProfile: studentProfile));
+          emit(ProfileLoaded(studentProfile: studentProfile, lecturerProfile: null));
         } else if (event.userType == AppConfig.userTypeLecturer) { // Lecturer (3)
           final lecturerProfile = LecturerFullProfileModel.fromJson(profile);
-          emit(ProfileLoaded(lecturerProfile: lecturerProfile));
+          emit(ProfileLoaded(studentProfile: null, lecturerProfile: lecturerProfile));
         } else {
           emit(const ProfileError('Loại tài khoản không được hỗ trợ'));
         }
