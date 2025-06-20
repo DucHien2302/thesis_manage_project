@@ -4,8 +4,10 @@ import 'package:thesis_manage_project/app_view.dart';
 import 'package:thesis_manage_project/repositories/auth_repository.dart';
 import 'package:thesis_manage_project/repositories/group_repository.dart';
 import 'package:thesis_manage_project/repositories/role_repository.dart';
+import 'package:thesis_manage_project/repositories/profile_repository.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
+import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
 import 'package:thesis_manage_project/services/permission_service.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 
@@ -31,10 +33,15 @@ class App extends StatelessWidget {
           create: (context) => GroupRepository(
             apiService: context.read<ApiService>(),
           ),
-        ),
-        // Role Repository
+        ),        // Role Repository
         RepositoryProvider<RoleRepository>(
           create: (context) => RoleRepository(
+            apiService: context.read<ApiService>(),
+          ),
+        ),
+        // Profile Repository
+        RepositoryProvider<ProfileRepository>(
+          create: (context) => ProfileRepository(
             apiService: context.read<ApiService>(),
           ),
         ),
@@ -53,11 +60,16 @@ class App extends StatelessWidget {
               authRepository: context.read<AuthRepository>(),
               permissionService: context.read<PermissionService>(),
             )..add(AuthStatusChecked()),
-          ),
-          // Group Bloc
+          ),          // Group Bloc
           BlocProvider<GroupBloc>(
             create: (context) => GroupBloc(
               groupRepository: context.read<GroupRepository>(),
+            ),
+          ),
+          // Profile Bloc
+          BlocProvider<ProfileBloc>(
+            create: (context) => ProfileBloc(
+              profileRepository: context.read<ProfileRepository>(),
             ),
           ),
         ],

@@ -24,9 +24,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final Logger _logger = Logger('ProfileScreen');
 
   bool _isLoading = true;
-  bool _isSaving = false;
-  int _userType = 0;
+  bool _isSaving = false;  int _userType = 0;
   String _userId = '';
+  String _userName = '';
 
   // Information fields
   final _firstNameController = TextEditingController();
@@ -46,13 +46,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _lecturerCodeController = TextEditingController();
   final _emailController = TextEditingController();
   final _titleController = TextEditingController();
-  int _selectedDepartment = 1;
-  List<Map<String, dynamic>> _departments = [];
+  int _selectedDepartment = 1;  List<Map<String, dynamic>> _departments = [];
 
-  // Information model fields
-  String? _informationId;
-  String? _studentInfoId;
-  String? _lecturerInfoId;
   @override
   void initState() {
     super.initState();
@@ -63,9 +58,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         // Get current user information from AuthBloc
         final authState = context.read<AuthBloc>().state;
-        if (authState is Authenticated) {
-          setState(() {
+        if (authState is Authenticated) {          setState(() {
             _userId = authState.user['id'] ?? '';
+            _userName = authState.user['user_name'] ?? '';
             _userType = authState.user['user_type'] ?? 0;
             _logger.debug('User type set to: $_userType');
           });
@@ -182,12 +177,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
   }
-
   // Parse student profile
   void _parseStudentProfile(Map<String, dynamic> profile) {
     if (profile['information'] != null) {
       final information = profile['information'];
-      _informationId = information['id'];
       _firstNameController.text = information['first_name'] ?? '';
       _lastNameController.text = information['last_name'] ?? '';
       _addressController.text = information['address'] ?? '';
@@ -202,7 +195,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     if (profile['student_info'] != null) {
       final studentInfo = profile['student_info'];
-      _studentInfoId = studentInfo['id'];
       _studentCodeController.text = studentInfo['student_code'] ?? '';
       _classNameController.text = studentInfo['class_name'] ?? '';
       // Make sure we're handling UUID as string
@@ -210,12 +202,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _logger.debug('Parsed major_id from profile: $_selectedMajorId');
     }
   }
-
   // Parse lecturer profile
   void _parseLecturerProfile(Map<String, dynamic> profile) {
     if (profile['information'] != null) {
       final information = profile['information'];
-      _informationId = information['id'];
       _firstNameController.text = information['first_name'] ?? '';
       _lastNameController.text = information['last_name'] ?? '';
       _addressController.text = information['address'] ?? '';
@@ -231,13 +221,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (profile['lecturer_info'] != null) {
       final lecturerInfo = profile['lecturer_info'];
-      _lecturerInfoId = lecturerInfo['id'];
       _lecturerCodeController.text = lecturerInfo['lecturer_code'] ?? '';
       _emailController.text = lecturerInfo['email'] ?? '';
       _titleController.text = lecturerInfo['title'] ?? '';
       _selectedDepartment = lecturerInfo['department'] ?? 1;
     }
-  } // Set default values for new profiles
+  }// Set default values for new profiles
 
   void _setDefaultValues() {
     _firstNameController.text = '';
@@ -282,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'address': _addressController.text,
         'tel_phone': _phoneController.text,
       }; // Prepare request data based on user type
-      Map<String, dynamic> requestData = {};
+      Map<String, dynamic> requestData = {};      
       if (_userType == AppConfig.userTypeStudent) {
         // Student (2)
         // Prepare student-specific data
@@ -290,9 +279,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'student_code': _studentCodeController.text,
           'class_name': _classNameController.text,
           'major_id': _selectedMajorId,
-        };
-
-        requestData = {
+        };          requestData = {
+          'user_id': _userId,
+          'user_name': _userName,
           'information': informationData,
           'student_info': studentInfoData,
         };
@@ -304,23 +293,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'department': _selectedDepartment,
           'title': _titleController.text,
           'email': _emailController.text,
-        };
-
+        };        
         requestData = {
+          'user_id': _userId,
           'information': informationData,
           'lecturer_info': lecturerInfoData,
-        };
-      }
+        };      }
 
-      // Send data to server
+      // Debug log for request data
+      _logger.debug('Preparing request data for user type: $_userType');
+      _logger.debug('User ID: $_userId, User Name: $_userName');
+      _logger.debug('Request data: $requestData');      // Send data to server
       final result = await _profileRepository.createOrUpdateProfile(
         _userType,
         requestData,
       );
 
+      _logger.debug('Profile save result: $result');
+
       if (result.containsKey('error')) {
+        _logger.error('Profile save failed with error: ${result['error']}');
         _showErrorSnackBar('Lỗi khi lưu thông tin: ${result['error']}');
       } else {
+        _logger.debug('Profile save successful');
         // Reload profile to get updated IDs
         await _loadUserProfile();
         _showSuccessSnackBar('Thông tin đã được lưu thành công');

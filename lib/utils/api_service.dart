@@ -144,9 +144,13 @@ class ApiService {
       }
     } catch (e) {
       _logger.error('Không thể parse response JSON: $e');
-    }
-
-    if (statusCode >= 200 && statusCode < 300) {
+    }    if (statusCode >= 200 && statusCode < 300) {
+      // Handle successful responses
+      if (statusCode == 204 || response.body.isEmpty) {
+        // No Content response - return success indicator
+        _logger.debug('Received empty response body (status $statusCode) - considering successful');
+        return {'success': true, 'status': statusCode};
+      }
       return responseData; // Return the actual decoded data (List, Map, or primitive)
     } else if (statusCode == 401) {
       // Lưu lại lỗi để xử lý token hết hạn ở tầng trên
