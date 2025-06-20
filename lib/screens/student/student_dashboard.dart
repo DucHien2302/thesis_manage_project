@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/profile_screen.dart';
+import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
+import 'package:thesis_manage_project/repositories/profile_repository.dart';
+import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/widgets/custom_navigation_bar.dart';
 import 'package:thesis_manage_project/widgets/custom_app_bar.dart';
 import 'package:thesis_manage_project/widgets/page_transition_widget.dart';
@@ -208,16 +211,53 @@ class _StudentDashboardState extends State<StudentDashboard> {
 }
 
 // Tab Tổng quan
-class _OverviewTab extends StatelessWidget {
+class _OverviewTab extends StatefulWidget {
   const _OverviewTab();
 
   @override
+  State<_OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<_OverviewTab> {
+  late ProfileBloc _profileBloc;
+  
+  @override
+  void initState() {
+    super.initState();
+    _profileBloc = ProfileBloc(
+      profileRepository: ProfileRepository(apiService: ApiService())
+    );
+    
+    // Load profile data
+    _loadProfile();
+  }
+
+  void _loadProfile() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final userId = authState.user['id']?.toString() ?? '';
+      _profileBloc.add(LoadProfile(
+        userType: AppConfig.userTypeStudent,
+        userId: userId,
+      ));
+    }
+  }
+
+  @override
+  void dispose() {
+    _profileBloc.close();
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 1));
-      },
-      child: SingleChildScrollView(
+    return BlocProvider.value(
+      value: _profileBloc,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          _loadProfile();
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -324,36 +364,39 @@ class _OverviewTab extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 12),
-            
-            InfoCard(
-              icon: Icons.badge,
-              title: 'MSSV',
-              value: '2024001',
-              iconColor: AppColors.primary,
-            ),
-            InfoCard(
-              icon: Icons.person_outline,
-              title: 'Họ tên',
-              value: 'Nguyễn Văn A',
-              iconColor: AppColors.success,
-            ),
-            InfoCard(
-              icon: Icons.school,
-              title: 'Lớp',
-              value: 'CNTT K17',
-              iconColor: AppColors.info,
-            ),
-            InfoCard(
-              icon: Icons.business,
-              title: 'Khoa',
-              value: 'Công nghệ thông tin',
-              iconColor: AppColors.warning,
-            ),            InfoCard(
-              icon: Icons.email,
-              title: 'Email',
-              value: 'student@example.com',
-              iconColor: AppColors.error,
+            const SizedBox(height: 12),            // Hiển thị thông tin sinh viên từ ProfileBloc
+            BlocBuilder<ProfileBloc, ProfileState>(
+              builder: (context, state) {
+                print('DEBUG: ProfileBloc state: $state');
+                
+                if (state is ProfileLoading) {
+                  print('DEBUG: ProfileLoading state');
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                
+                if (state is ProfileError) {
+                  print('DEBUG: ProfileError state: ${state.message}');
+                  return _buildEmptyProfileCards();
+                }
+                
+                if (state is ProfileLoaded && state.studentProfile != null) {
+                  print('DEBUG: ProfileLoaded state with data');
+                  final profile = state.studentProfile!;
+                  final information = profile.information;
+                  final studentInfo = profile.studentInfo;
+                  
+                  print('DEBUG: Information - firstName: ${information.firstName}, lastName: ${information.lastName}');
+                  print('DEBUG: StudentInfo - studentCode: ${studentInfo.studentCode}, className: ${studentInfo.className}');
+                  
+                  return _buildProfileCards(information, studentInfo);
+                }
+                
+                print('DEBUG: Default case - no data');
+                // Trường hợp mặc định - chưa có dữ liệu
+                return _buildEmptyProfileCards();
+              },
             ),
             
             const SizedBox(height: 20),
@@ -482,18 +525,16 @@ class _OverviewTab extends StatelessWidget {
                     AppColors.warning,
                   ),
                   _buildNotificationItem(
-                    'Cuộc họp nhóm lúc 14:00',
-                    'Hôm nay',
+                    'Cuộc họp nhóm lúc 14:00',                    'Hôm nay',
                     AppColors.success,
                   ),
                 ],
               ),
-            ),
-            
-            const SizedBox(height: 20),
-          ],
+            ),            const SizedBox(height: 20),          ],
         ),
       ),
+      ),
+
     );
   }
 
@@ -526,6 +567,135 @@ class _OverviewTab extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+    // Helper method để hiển thị profile cards với dữ liệu thực
+  Widget _buildProfileCards(dynamic information, dynamic studentInfo) {
+    // Helper function để format ngày sinh
+    String formatBirthDate(DateTime? dateTime) {
+      if (dateTime == null) return 'Đang cập nhật...';
+      
+      // Kiểm tra nếu là ngày mặc định (1970-01-01)
+      if (dateTime.year == 1970 && dateTime.month == 1 && dateTime.day == 1) {
+        return 'Đang cập nhật...';
+      }
+      
+      return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
+    }
+
+    // Helper function để kiểm tra chuỗi rỗng hoặc null
+    String getDisplayValue(String? value) {
+      if (value == null || value.isEmpty || value.trim().isEmpty) {
+        return 'Đang cập nhật...';
+      }
+      return value;
+    }
+
+    // Helper function để format họ tên
+    String formatFullName(String? firstName, String? lastName) {
+      final first = firstName?.trim() ?? '';
+      final last = lastName?.trim() ?? '';
+      
+      if (first.isEmpty && last.isEmpty) {
+        return 'Đang cập nhật...';
+      }
+      
+      return '$first $last'.trim();
+    }
+
+    return Column(
+      children: [
+        InfoCard(
+          icon: Icons.badge,
+          title: 'MSSV',
+          value: getDisplayValue(studentInfo.studentCode),
+          iconColor: AppColors.primary,
+        ),
+        InfoCard(
+          icon: Icons.person_outline,
+          title: 'Họ tên',
+          value: formatFullName(information.firstName, information.lastName),
+          iconColor: AppColors.success,
+        ),
+        InfoCard(
+          icon: Icons.school,
+          title: 'Lớp',
+          value: getDisplayValue(studentInfo.className),
+          iconColor: AppColors.info,
+        ),
+        InfoCard(
+          icon: Icons.business,
+          title: 'Ngành',
+          value: getDisplayValue(studentInfo.majorName),
+          iconColor: AppColors.warning,
+        ),
+        InfoCard(
+          icon: Icons.cake,
+          title: 'Ngày sinh',
+          value: formatBirthDate(information.dateOfBirth),
+          iconColor: AppColors.error,
+        ),        InfoCard(
+          icon: Icons.location_on,
+          title: 'Địa chỉ',
+          value: getDisplayValue(information.address),
+          iconColor: AppColors.accent,
+        ),
+        InfoCard(
+          icon: Icons.phone,
+          title: 'Điện thoại',
+          value: getDisplayValue(information.telPhone),
+          iconColor: AppColors.info,
+        ),
+      ],
+    );
+  }
+  // Helper method để hiển thị profile cards rỗng
+  Widget _buildEmptyProfileCards() {
+    return Column(
+      children: [
+        InfoCard(
+          icon: Icons.badge,
+          title: 'MSSV',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.primary,
+        ),
+        InfoCard(
+          icon: Icons.person_outline,
+          title: 'Họ tên',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.success,
+        ),
+        InfoCard(
+          icon: Icons.school,
+          title: 'Lớp',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.info,
+        ),
+        InfoCard(
+          icon: Icons.business,
+          title: 'Ngành',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.warning,
+        ),
+        InfoCard(
+          icon: Icons.cake,
+          title: 'Ngày sinh',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.error,
+        ),
+        InfoCard(
+          icon: Icons.location_on,
+          title: 'Địa chỉ',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.accent,
+        ),
+        InfoCard(
+          icon: Icons.phone,
+          title: 'Điện thoại',
+          value: 'Đang cập nhật...',
+          iconColor: AppColors.info,
+        ),
+      ],
     );
   }
 }

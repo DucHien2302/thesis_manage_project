@@ -6,12 +6,17 @@ part 'profile_models.g.dart';
 @JsonSerializable()
 class InformationModel extends Equatable {
   final String? id;
+  @JsonKey(name: 'user_id')
   final String? userId;
+  @JsonKey(name: 'first_name')
   final String firstName;
+  @JsonKey(name: 'last_name')
   final String lastName;
+  @JsonKey(name: 'date_of_birth')
   final DateTime dateOfBirth;
   final int gender;
   final String address;
+  @JsonKey(name: 'tel_phone')
   final String telPhone;
 
   const InformationModel({
@@ -68,12 +73,19 @@ class InformationModel extends Equatable {
 @JsonSerializable()
 class StudentInfoModel extends Equatable {
   final String? id;
+  @JsonKey(name: 'user_id')
   final String? userId;
+  @JsonKey(name: 'student_code')
   final String studentCode;
+  @JsonKey(name: 'class_name')
   final String? className;
+  @JsonKey(name: 'major_id')
   final String majorId;
+  @JsonKey(name: 'major_name')
   final String? majorName;
+  @JsonKey(name: 'create_datetime')
   final DateTime? createDatetime;
+  @JsonKey(name: 'update_datetime')
   final DateTime? updateDatetime;
 
   const StudentInfoModel({
@@ -189,9 +201,12 @@ class LecturerInfoModel extends Equatable {
 
 @JsonSerializable()
 class StudentFullProfileModel extends Equatable {
+  @JsonKey(name: 'user_id')
   final String userId;
+  @JsonKey(name: 'user_name')
   final String userName;
   final InformationModel information;
+  @JsonKey(name: 'student_info')
   final StudentInfoModel studentInfo;
 
   const StudentFullProfileModel({
