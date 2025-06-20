@@ -19,11 +19,17 @@ class _MyGroupsViewState extends State<MyGroupsView>
   @override
   bool get wantKeepAlive => true;
 
+
   @override
   void initState() {
     super.initState();
-    // Load groups when the screen initializes
-    context.read<GroupBloc>().add(GetMyGroupsEvent());
+    // Load groups when the screen initializes (only for first time or if no cache)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Always try to get groups, the bloc will handle caching
+        context.read<GroupBloc>().add(GetMyGroupsEvent());
+      }
+    });
   }
 
   @override
@@ -68,8 +74,7 @@ class _MyGroupsViewState extends State<MyGroupsView>
               ),
             );
           }
-        },
-        builder: (context, state) {
+        },        builder: (context, state) {
           if (state is GroupLoadingState) {
             return const LoadingIndicator();
           } else if (state is MyGroupsLoadedState) {
@@ -83,7 +88,14 @@ class _MyGroupsViewState extends State<MyGroupsView>
               child: _buildGroupsList(state.groups),
             );
           } else {
-            return const SizedBox.shrink();
+            // For error states or other states, show appropriate message
+            return const Center(
+              child: Text(
+                'Không thể tải dữ liệu nhóm.\nVui lòng thử lại.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            );
           }
         },
       ),
