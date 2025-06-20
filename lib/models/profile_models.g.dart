@@ -9,55 +9,55 @@ part of 'profile_models.dart';
 InformationModel _$InformationModelFromJson(Map<String, dynamic> json) =>
     InformationModel(
       id: json['id'] as String?,
-      userId: json['userId'] as String?,
-      firstName: json['firstName'] as String,
-      lastName: json['lastName'] as String,
-      dateOfBirth: DateTime.parse(json['dateOfBirth'] as String),
+      userId: json['user_id'] as String?,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
+      dateOfBirth: DateTime.parse(json['date_of_birth'] as String),
       gender: (json['gender'] as num).toInt(),
       address: json['address'] as String,
-      telPhone: json['telPhone'] as String,
+      telPhone: json['tel_phone'] as String,
     );
 
 Map<String, dynamic> _$InformationModelToJson(InformationModel instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'userId': instance.userId,
-      'firstName': instance.firstName,
-      'lastName': instance.lastName,
-      'dateOfBirth': instance.dateOfBirth.toIso8601String(),
+      'user_id': instance.userId,
+      'first_name': instance.firstName,
+      'last_name': instance.lastName,
+      'date_of_birth': instance.dateOfBirth.toIso8601String(),
       'gender': instance.gender,
       'address': instance.address,
-      'telPhone': instance.telPhone,
+      'tel_phone': instance.telPhone,
     };
 
 StudentInfoModel _$StudentInfoModelFromJson(Map<String, dynamic> json) =>
     StudentInfoModel(
       id: json['id'] as String?,
-      userId: json['userId'] as String?,
-      studentCode: json['studentCode'] as String,
-      className: json['className'] as String?,
-      majorId: json['majorId'] as String,
-      majorName: json['majorName'] as String?,
+      userId: json['user_id'] as String?,
+      studentCode: json['student_code'] as String,
+      className: json['class_name'] as String?,
+      majorId: json['major_id'] as String,
+      majorName: json['major_name'] as String?,
       createDatetime:
-          json['createDatetime'] == null
+          json['create_datetime'] == null
               ? null
-              : DateTime.parse(json['createDatetime'] as String),
+              : DateTime.parse(json['create_datetime'] as String),
       updateDatetime:
-          json['updateDatetime'] == null
+          json['update_datetime'] == null
               ? null
-              : DateTime.parse(json['updateDatetime'] as String),
+              : DateTime.parse(json['update_datetime'] as String),
     );
 
 Map<String, dynamic> _$StudentInfoModelToJson(StudentInfoModel instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'userId': instance.userId,
-      'studentCode': instance.studentCode,
-      'className': instance.className,
-      'majorId': instance.majorId,
-      'majorName': instance.majorName,
-      'createDatetime': instance.createDatetime?.toIso8601String(),
-      'updateDatetime': instance.updateDatetime?.toIso8601String(),
+      'user_id': instance.userId,
+      'student_code': instance.studentCode,
+      'class_name': instance.className,
+      'major_id': instance.majorId,
+      'major_name': instance.majorName,
+      'create_datetime': instance.createDatetime?.toIso8601String(),
+      'update_datetime': instance.updateDatetime?.toIso8601String(),
     };
 
 LecturerInfoModel _$LecturerInfoModelFromJson(Map<String, dynamic> json) =>
@@ -95,23 +95,23 @@ Map<String, dynamic> _$LecturerInfoModelToJson(LecturerInfoModel instance) =>
 StudentFullProfileModel _$StudentFullProfileModelFromJson(
   Map<String, dynamic> json,
 ) => StudentFullProfileModel(
-  userId: json['userId'] as String,
-  userName: json['userName'] as String,
+  userId: json['user_id'] as String,
+  userName: json['user_name'] as String,
   information: InformationModel.fromJson(
     json['information'] as Map<String, dynamic>,
   ),
   studentInfo: StudentInfoModel.fromJson(
-    json['studentInfo'] as Map<String, dynamic>,
+    json['student_info'] as Map<String, dynamic>,
   ),
 );
 
 Map<String, dynamic> _$StudentFullProfileModelToJson(
   StudentFullProfileModel instance,
 ) => <String, dynamic>{
-  'userId': instance.userId,
-  'userName': instance.userName,
+  'user_id': instance.userId,
+  'user_name': instance.userName,
   'information': instance.information,
-  'studentInfo': instance.studentInfo,
+  'student_info': instance.studentInfo,
 };
 
 LecturerFullProfileModel _$LecturerFullProfileModelFromJson(
