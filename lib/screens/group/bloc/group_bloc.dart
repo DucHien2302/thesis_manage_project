@@ -13,6 +13,10 @@ abstract class GroupEvent extends Equatable {
 
 class GetMyGroupsEvent extends GroupEvent {}
 
+class ClearGroupCacheEvent extends GroupEvent {}
+
+class RefreshGroupsEvent extends GroupEvent {}
+
 class CreateGroupEvent extends GroupEvent {
   final String name;
 
@@ -115,10 +119,10 @@ class UpdateGroupNameEvent extends GroupEvent {
   List<Object?> get props => [groupId, newName];
 }
 
-class LeaveGroupEvent extends GroupEvent {
+class DissolveGroupEvent extends GroupEvent {
   final String groupId;
 
-  const LeaveGroupEvent({required this.groupId});
+  const DissolveGroupEvent({required this.groupId});
 
   @override
   List<Object?> get props => [groupId];
@@ -214,7 +218,7 @@ class GroupNameUpdatedState extends GroupState {
   List<Object?> get props => [updatedGroup];
 }
 
-class GroupLeftState extends GroupState {}
+class GroupDissolvedState extends GroupState {}
 
 class GroupErrorState extends GroupState {
   final String error;
@@ -228,9 +232,17 @@ class GroupErrorState extends GroupState {
 // Bloc
 class GroupBloc extends Bloc<GroupEvent, GroupState> {
   final GroupRepository groupRepository;
+  
+  // Cache for groups to avoid losing data when switching tabs
+  List<GroupModel>? _cachedGroups;
+  DateTime? _lastGroupsUpdate;
+  static const Duration _cacheTimeout = Duration(minutes: 5);
+  bool _isFetching = false; // Flag to prevent multiple concurrent requests
 
   GroupBloc({required this.groupRepository}) : super(GroupInitialState()) {
     on<GetMyGroupsEvent>(_onGetMyGroups);
+    on<RefreshGroupsEvent>(_onRefreshGroups);
+    on<ClearGroupCacheEvent>(_onClearGroupCache);
     on<CreateGroupEvent>(_onCreateGroup);
     on<AddGroupMemberEvent>(_onAddGroupMember);
     on<RemoveGroupMemberEvent>(_onRemoveGroupMember);
@@ -242,23 +254,45 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     on<RejectInviteEvent>(_onRejectInvite);
     on<RevokeInviteEvent>(_onRevokeInvite);
     on<UpdateGroupNameEvent>(_onUpdateGroupName);
-    on<LeaveGroupEvent>(_onLeaveGroup);
-  }
+    on<DissolveGroupEvent>(_onDissolveGroup);
+  }  Future<void> _onGetMyGroups(GetMyGroupsEvent event, Emitter<GroupState> emit) async {
+    // Prevent multiple concurrent requests
+    if (_isFetching) return;
+    
+    // Check if we have valid cached data
+    if (_cachedGroups != null && 
+        _lastGroupsUpdate != null && 
+        DateTime.now().difference(_lastGroupsUpdate!) < _cacheTimeout) {
+      emit(MyGroupsLoadedState(groups: _cachedGroups!));
+      return;
+    }
 
-  Future<void> _onGetMyGroups(GetMyGroupsEvent event, Emitter<GroupState> emit) async {
+    _isFetching = true;
     emit(GroupLoadingState());
     try {
       final groups = await groupRepository.getMyGroups();
+      _cachedGroups = groups;
+      _lastGroupsUpdate = DateTime.now();
       emit(MyGroupsLoadedState(groups: groups));
     } catch (e) {
-      emit(GroupErrorState(error: e.toString()));
+      // If we have cached data, fall back to it even if the request fails
+      if (_cachedGroups != null) {
+        emit(MyGroupsLoadedState(groups: _cachedGroups!));
+      } else {
+        emit(GroupErrorState(error: e.toString()));
+      }
+    } finally {
+      _isFetching = false;
     }
-  }
-
-  Future<void> _onCreateGroup(CreateGroupEvent event, Emitter<GroupState> emit) async {
+  }  Future<void> _onCreateGroup(CreateGroupEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
       final group = await groupRepository.createGroup(event.name);
+      // Update cache with new group
+      if (_cachedGroups != null) {
+        _cachedGroups!.add(group);
+        _lastGroupsUpdate = DateTime.now();
+      }
       emit(GroupCreatedState(group: group));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
@@ -328,11 +362,13 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-
   Future<void> _onAcceptInvite(AcceptInviteEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
       await groupRepository.acceptInvite(event.inviteId);
+      // Clear cache since user now has a new group
+      _cachedGroups = null;
+      _lastGroupsUpdate = null;
       emit(const InviteActionSuccessState(action: "accepted"));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
@@ -358,7 +394,6 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-
   Future<void> _onUpdateGroupName(UpdateGroupNameEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
@@ -366,18 +401,49 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
         event.groupId,
         event.newName,
       );
+      
+      // Update cache with new group name
+      if (_cachedGroups != null) {
+        final index = _cachedGroups!.indexWhere((g) => g.id == event.groupId);
+        if (index != -1) {
+          _cachedGroups![index] = updatedGroup;
+          _lastGroupsUpdate = DateTime.now();
+        }
+      }
+      
       emit(GroupNameUpdatedState(updatedGroup: updatedGroup));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
   }
-  Future<void> _onLeaveGroup(LeaveGroupEvent event, Emitter<GroupState> emit) async {
+  
+  Future<void> _onDissolveGroup(DissolveGroupEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
       await groupRepository.deleteGroup(event.groupId);
-      emit(GroupLeftState());
+      
+      // Remove group from cache
+      if (_cachedGroups != null) {
+        _cachedGroups!.removeWhere((group) => group.id == event.groupId);
+        _lastGroupsUpdate = DateTime.now();
+      }
+      
+      emit(GroupDissolvedState());
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
+  }
+
+  // Method to refresh groups by clearing cache and fetching new data
+  Future<void> _onRefreshGroups(RefreshGroupsEvent event, Emitter<GroupState> emit) async {
+    _cachedGroups = null;
+    _lastGroupsUpdate = null;
+    add(GetMyGroupsEvent());
+  }
+
+  // Method to clear cache
+  Future<void> _onClearGroupCache(ClearGroupCacheEvent event, Emitter<GroupState> emit) async {
+    _cachedGroups = null;
+    _lastGroupsUpdate = null;
   }
 }

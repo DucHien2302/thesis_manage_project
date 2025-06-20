@@ -6,6 +6,7 @@ import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/components/animated_loading.dart';
 import 'package:thesis_manage_project/config/constants.dart';
+import 'package:thesis_manage_project/services/group_state_manager.dart';
 
 class StudentListView extends StatefulWidget {
   const StudentListView({Key? key}) : super(key: key);
@@ -17,10 +18,10 @@ class StudentListView extends StatefulWidget {
 class _StudentListViewState extends State<StudentListView>
     with AutomaticKeepAliveClientMixin {
   late StudentRepository _studentRepository;
+  late GroupStateManager _groupStateManager;
   List<StudentModel> _students = [];
   List<StudentModel> _filteredStudents = [];
-  bool _isLoading = true;
-  String _searchQuery = '';
+  bool _isLoading = true;  String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _sentInvites = <String>{};
 
@@ -31,8 +32,25 @@ class _StudentListViewState extends State<StudentListView>
   void initState() {
     super.initState();
     _studentRepository = StudentRepository(apiService: ApiService());
+    _groupStateManager = GroupStateManager();
     _loadStudents();
+  }  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh when tab becomes active
+    if (mounted && !_isLoading) {
+      _refreshGroupInfo();
+    }
   }
+
+  Future<void> _refreshGroupInfo() async {
+    try {
+      await _groupStateManager.getCurrentUserGroup(forceRefresh: true);
+    } catch (e) {
+      // Handle error silently for now
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -79,7 +97,6 @@ class _StudentListViewState extends State<StudentListView>
       }
     }
   }
-
   void _filterStudents(String query) {
     setState(() {
       _searchQuery = query;
@@ -93,7 +110,7 @@ class _StudentListViewState extends State<StudentListView>
         }).toList();
       }
     });
-  }  Future<void> _sendInvite(StudentModel student) async {
+  }Future<void> _sendInvite(StudentModel student) async {
     if (!mounted) return;
     
     try {
@@ -187,8 +204,7 @@ class _StudentListViewState extends State<StudentListView>
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
                   borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
+                ),                contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppDimens.marginMedium,
                   vertical: AppDimens.marginMedium,
                 ),
@@ -272,7 +288,7 @@ class _StudentListViewState extends State<StudentListView>
             const SizedBox(height: AppDimens.marginMedium),
             Text(
               _searchQuery.isEmpty
-                  ? 'Không có sinh viên nào'
+                  ? 'Không có sinh viên khả dụng'
                   : 'Không tìm thấy sinh viên nào',
               style: const TextStyle(
                 fontSize: 18,
@@ -311,7 +327,6 @@ class _StudentListViewState extends State<StudentListView>
       ),
     );
   }
-
   Widget _buildStudentCard(StudentModel student) {
     final bool hasInvited = _sentInvites.contains(student.id);
 

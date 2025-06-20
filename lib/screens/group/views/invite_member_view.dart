@@ -206,7 +206,6 @@ class _InviteMemberViewState extends State<InviteMemberView> {
       ),
     );
   }
-
   Widget _buildStudentList() {
     return RefreshIndicator(
       onRefresh: _loadStudents,
@@ -218,30 +217,56 @@ class _InviteMemberViewState extends State<InviteMemberView> {
           return Card(
             elevation: 2,
             margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: CircleAvatar(
-                backgroundColor: Colors.blue.shade100,
-                child: const Icon(Icons.person, color: Colors.blue),
-              ),
-              title: Text(
-                student.fullName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  const SizedBox(height: 8),
-                  Text('MSSV: ${student.studentCode}'),
-                  Text('Ngành: ${student.majorName}'),
+                  // Avatar
+                  CircleAvatar(
+                    backgroundColor: Colors.blue.shade100,
+                    child: const Icon(Icons.person, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 16),
+                  // Student Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          student.fullName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'MSSV: ${student.studentCode}',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          'Ngành: ${student.majorName}',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Action Button
+                  SizedBox(
+                    width: 60,
+                    child: CustomButton(
+                      text: 'Mời',
+                      onPressed: () => _sendInvite(student.id),
+                      backgroundColor: Theme.of(context).primaryColor,
+                      textColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      fullWidth: false,
+                      height: 36,
+                    ),
+                  ),
                 ],
-              ),
-              trailing: CustomButton(
-                text: 'Mời',
-                onPressed: () => _sendInvite(student.id),
-                backgroundColor: Theme.of(context).primaryColor,
-                textColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               ),
             ),
           );

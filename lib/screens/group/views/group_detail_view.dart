@@ -20,7 +20,6 @@ class _GroupDetailViewState extends State<GroupDetailView> {
   late String? currentUserId;
 
   bool get isLeader => currentUserId != null && widget.group.leaderId == currentUserId;
-  
   @override
   void initState() {
     super.initState();
@@ -29,8 +28,12 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     if (authState is Authenticated) {
       currentUserId = authState.user['id']?.toString();
     }
-      // Load group members when the screen initializes
-    context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id.toString()));
+    // Load group members when the screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+      }
+    });
   }
 
   @override
@@ -58,10 +61,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                   ),
                 ),
               ],
-            ),
-        ],
+            ),        ],
       ),
-      body: BlocConsumer<GroupBloc, GroupState>(
+      body: BlocListener<GroupBloc, GroupState>(
         listener: (context, state) {
           if (state is GroupErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -77,32 +79,46 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã chuyển quyền nhóm trưởng')),
             );
-            // Navigate back to refresh the group list
             Navigator.pop(context);
           } else if (state is GroupNameUpdatedState) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã cập nhật tên nhóm')),
             );
-            // Update the app bar title
-            // Since we can't directly update the widget.group, we'll use a rebuild
             context.read<GroupBloc>().add(GetMyGroupsEvent());
-          } else if (state is GroupLeftState) {
+          } else if (state is GroupDissolvedState) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Bạn đã rời khỏi nhóm')),
+              const SnackBar(content: Text('Nhóm đã được giải tán thành công')),
             );
-            // Navigate back to group list
             Navigator.pop(context);
           }
         },
-        builder: (context, state) {
-          if (state is GroupLoadingState) {
-            return const LoadingIndicator();
-          } else if (state is GroupMembersLoadedState) {
-            return _buildGroupDetails(state.members);
-          } else {
-            return const LoadingIndicator(message: 'Đang tải dữ liệu nhóm...');
-          }
-        },
+        child: BlocBuilder<GroupBloc, GroupState>(
+          builder: (context, state) {
+            if (state is GroupMembersLoadedState) {
+              return _buildGroupDetails(state.members);
+            } else if (state is GroupErrorState) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text('Có lỗi xảy ra'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+                      },
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return const LoadingIndicator(message: 'Đang tải dữ liệu nhóm...');
+            }
+          },
+        ),
       ),
       floatingActionButton: isLeader ? FloatingActionButton(
         onPressed: () {
@@ -151,9 +167,8 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 16),
-          _buildMembersList(members),
-          const SizedBox(height: 24),
-          if (isLeader)
+          _buildMembersList(members),          const SizedBox(height: 24),
+          if (isLeader) ...[
             CustomButton(
               text: 'Mời thêm thành viên',
               onPressed: () {
@@ -167,13 +182,14 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               backgroundColor: Theme.of(context).primaryColor,
               textColor: Colors.white,
             ),
-          const SizedBox(height: 16),
-          CustomButton(
-            text: 'Rời nhóm',
-            onPressed: () => _showLeaveGroupConfirmation(context),
-            backgroundColor: Colors.redAccent,
-            textColor: Colors.white,
-          ),
+            const SizedBox(height: 16),
+            CustomButton(
+              text: 'Giải tán nhóm',
+              onPressed: () => _showDissolveGroupConfirmation(context),
+              backgroundColor: Colors.redAccent,
+              textColor: Colors.white,
+            ),
+          ],
         ],
       ),
     );
@@ -390,17 +406,16 @@ class _GroupDetailViewState extends State<GroupDetailView> {
       },
     );
   }
-
-  void _showLeaveGroupConfirmation(BuildContext context) {
+  void _showDissolveGroupConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Rời nhóm'),
+          title: const Text('Giải tán nhóm'),
           content: const Text(
-            'Bạn có chắc chắn muốn rời khỏi nhóm này? '
-            'Nếu bạn là trưởng nhóm, quyền trưởng nhóm sẽ được chuyển cho thành viên khác '
-            'hoặc nhóm sẽ bị giải tán nếu không có thành viên nào khác.'
+            'Bạn có chắc chắn muốn giải tán nhóm này? '
+            'Thao tác này sẽ xóa nhóm và loại bỏ tất cả thành viên khỏi nhóm. '
+            'Thao tác này không thể hoàn tác.'
           ),
           actions: <Widget>[
             TextButton(
@@ -410,10 +425,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               },
             ),
             TextButton(
-              child: const Text('Rời nhóm', style: TextStyle(color: Colors.red)),
-              onPressed: () {
-                context.read<GroupBloc>().add(
-                  LeaveGroupEvent(groupId: widget.group.id),
+              child: const Text('Giải tán nhóm', style: TextStyle(color: Colors.red)),
+              onPressed: () {                context.read<GroupBloc>().add(
+                  DissolveGroupEvent(groupId: widget.group.id),
                 );
                 Navigator.of(dialogContext).pop();
               },
