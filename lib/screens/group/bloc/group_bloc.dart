@@ -310,11 +310,10 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
-  }
-  Future<void> _onSendInvite(SendInviteEvent event, Emitter<GroupState> emit) async {
+  }  Future<void> _onSendInvite(SendInviteEvent event, Emitter<GroupState> emit) async {
     emit(GroupLoadingState());
     try {
-      await groupRepository.sendInvite(event.receiverId);
+      await groupRepository.sendInvite(event.receiverId, groupId: event.groupId);
       emit(InviteSentState());
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));

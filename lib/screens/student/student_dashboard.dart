@@ -214,7 +214,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                           children: [
                             if (profileState is ProfileLoaded && profileState.studentProfile != null) ...[
                               Text(
-                                '${profileState.studentProfile!.information.lastName} ${profileState.studentProfile!.information.firstName}',
+                                '${profileState.studentProfile!.information.firstName} ${profileState.studentProfile!.information.lastName}',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

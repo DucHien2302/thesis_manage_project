@@ -191,14 +191,17 @@ class AllInvitesResponse extends Equatable {
 class InviteCreateRequest extends Equatable {
   @JsonKey(name: 'receiver_id')
   final String receiverId;
+  @JsonKey(name: 'group_id')
+  final String? groupId;
 
   const InviteCreateRequest({
     required this.receiverId,
+    this.groupId,
   });
 
   factory InviteCreateRequest.fromJson(Map<String, dynamic> json) => _$InviteCreateRequestFromJson(json);
   Map<String, dynamic> toJson() => _$InviteCreateRequestToJson(this);
 
   @override
-  List<Object?> get props => [receiverId];
+  List<Object?> get props => [receiverId, groupId];
 }
