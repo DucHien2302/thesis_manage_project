@@ -136,33 +136,36 @@ class ApiService {
   /// Throw Exception nếu có lỗi
   dynamic _handleResponse(http.Response response) {
     final statusCode = response.statusCode;
-    Map<String, dynamic>? responseBody;
+    dynamic responseData;
     
     try {
       if (response.body.isNotEmpty) {
-        final decoded = json.decode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          responseBody = decoded;
-        }
+        responseData = json.decode(response.body);
       }
     } catch (e) {
       _logger.error('Không thể parse response JSON: $e');
     }
 
     if (statusCode >= 200 && statusCode < 300) {
-      return responseBody ?? {}; // Return empty map if null instead of null
+      return responseData; // Return the actual decoded data (List, Map, or primitive)
     } else if (statusCode == 401) {
       // Lưu lại lỗi để xử lý token hết hạn ở tầng trên
-      throw Exception(responseBody?['detail'] ?? 'Không được phép truy cập. Vui lòng đăng nhập lại.');
+      throw Exception(responseData is Map && responseData['detail'] != null 
+          ? responseData['detail'] 
+          : 'Không được phép truy cập. Vui lòng đăng nhập lại.');
     } else if (statusCode == 403) {
-      throw Exception(responseBody?['detail'] ?? 'Bạn không có quyền truy cập tài nguyên này.');
+      throw Exception(responseData is Map && responseData['detail'] != null 
+          ? responseData['detail'] 
+          : 'Bạn không có quyền truy cập tài nguyên này.');
     } else if (statusCode == 404) {
-      throw Exception(responseBody?['detail'] ?? 'Tài nguyên không tồn tại.');
+      throw Exception(responseData is Map && responseData['detail'] != null 
+          ? responseData['detail'] 
+          : 'Tài nguyên không tồn tại.');
     } else if (statusCode == 422) {
       // Validation errors
       String errorMsg = 'Lỗi xác thực dữ liệu:';
-      if (responseBody != null && responseBody.containsKey('detail')) {
-        final details = responseBody['detail'];
+      if (responseData is Map && responseData.containsKey('detail')) {
+        final details = responseData['detail'];
         if (details is List) {
           for (var detail in details) {
             if (detail is Map && detail.containsKey('msg')) {
@@ -170,15 +173,14 @@ class ApiService {
             }
           }
         } else {
-          errorMsg = responseBody['detail'].toString();
+          errorMsg = responseData['detail'].toString();
         }
       }
       throw Exception(errorMsg);
     } else {
-      final message =
-          responseBody != null && responseBody['detail'] != null
-              ? responseBody['detail']
-              : 'Có lỗi xảy ra. Mã lỗi: $statusCode';
+      final message = responseData is Map && responseData['detail'] != null
+          ? responseData['detail']
+          : 'Có lỗi xảy ra. Mã lỗi: $statusCode';
       throw Exception(message);
     }
   }

@@ -3,6 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/profile_screen.dart';
+import 'package:thesis_manage_project/widgets/custom_navigation_bar.dart';
+import 'package:thesis_manage_project/widgets/custom_app_bar.dart';
+import 'package:thesis_manage_project/widgets/page_transition_widget.dart';
+import 'package:thesis_manage_project/widgets/modern_card.dart';
+import 'package:thesis_manage_project/widgets/floating_action_button_widget.dart' as fab;
+import 'package:thesis_manage_project/widgets/ui_components.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -11,28 +17,45 @@ class StudentDashboard extends StatefulWidget {
   State<StudentDashboard> createState() => _StudentDashboardState();
 }
 
-class _StudentDashboardState extends State<StudentDashboard>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _StudentDashboardState extends State<StudentDashboard> {
+  int _currentIndex = 0;
+
+  final List<NavigationItem> _navigationItems = [
+    NavigationItem(
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
+      label: 'Tổng quan',
+    ),
+    NavigationItem(
+      icon: Icons.group_outlined,
+      activeIcon: Icons.group,
+      label: 'Nhóm',
+    ),
+    NavigationItem(
+      icon: Icons.assignment_outlined,
+      activeIcon: Icons.assignment,
+      label: 'Đề tài',
+    ),
+    NavigationItem(
+      icon: Icons.task_outlined,
+      activeIcon: Icons.task,
+      label: 'Nhiệm vụ',
+    ),
+    NavigationItem(
+      icon: Icons.bar_chart_outlined,
+      activeIcon: Icons.bar_chart,
+      label: 'Tiến độ',
+    ),
+    NavigationItem(
+      icon: Icons.person_outlined,
+      activeIcon: Icons.person,
+      label: 'Hồ sơ',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
-  }  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Add a listener to ensure tab controller updates the state
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {});
-      }
-    });
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -56,7 +79,8 @@ class _StudentDashboardState extends State<StudentDashboard>
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Hủy'),
             ),
-            ElevatedButton(              onPressed: () {
+            ElevatedButton(
+              onPressed: () {
                 Navigator.of(context).pop();
                 BlocProvider.of<AuthBloc>(context).add(const LogoutRequested());
               },
@@ -74,52 +98,112 @@ class _StudentDashboardState extends State<StudentDashboard>
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(      appBar: AppBar(
-        title: const Text('Dashboard Sinh viên'),
-        backgroundColor: AppColors.success,
-        foregroundColor: Colors.white,
-        elevation: 0,
+    return Scaffold(
+      appBar: GradientAppBar(
+        title: _getPageTitle(),
+        gradientColors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+        elevation: 4,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              // TODO: Implement notifications
+            },
+            tooltip: 'Thông báo',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _showLogoutDialog(context),
             tooltip: 'Đăng xuất',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600),          tabs: const [
-            Tab(icon: Icon(Icons.dashboard_outlined), text: 'Tổng quan'),
-            Tab(icon: Icon(Icons.group_outlined), text: 'Nhóm'),
-            Tab(icon: Icon(Icons.assignment_outlined), text: 'Đề tài'),
-            Tab(icon: Icon(Icons.task_outlined), text: 'Nhiệm vụ'),
-            Tab(icon: Icon(Icons.bar_chart_outlined), text: 'Tiến độ'),
-            Tab(icon: Icon(Icons.person_outlined), text: 'Hồ sơ'),
-          ],
-        ),
-      ),      body: TabBarView(
-        controller: _tabController,
-        children: [
-          const _OverviewTab(),
-          const _GroupTab(),
-          const _ThesisTab(),
-          const _TaskTab(),
-          const _ProgressTab(),
-          Builder(builder: (context) {
-            // Create the ProfileScreen with proper context
-            return const ProfileScreen();
-          }),
-        ],
       ),
+      body: PageTransitionWidget(
+        child: _buildCurrentPage(),
+      ),
+      bottomNavigationBar: CustomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: _navigationItems,
+      ),      floatingActionButton: _currentIndex == 0 
+          ? fab.FloatingActionButtonWidget(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    title: const Text('Tạo mới'),
+                    content: const Text('Bạn muốn tạo gì?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Hủy'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Tính năng đang phát triển')),
+                          );
+                        },
+                        child: const Text('Tạo nhiệm vụ'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: Icons.add,
+              tooltip: 'Tạo mới',
+              backgroundColor: AppColors.success,
+            )
+          : null,
     );
+  }
+
+  String _getPageTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return 'Tổng quan';
+      case 1:
+        return 'Nhóm của tôi';
+      case 2:
+        return 'Đề tài';
+      case 3:
+        return 'Nhiệm vụ';
+      case 4:
+        return 'Tiến độ';
+      case 5:
+        return 'Hồ sơ';
+      default:
+        return 'Dashboard Sinh viên';
+    }
+  }
+
+  Widget _buildCurrentPage() {
+    switch (_currentIndex) {
+      case 0:
+        return const _OverviewTab();
+      case 1:
+        return const _GroupTab();
+      case 2:
+        return const _ThesisTab();
+      case 3:
+        return const _TaskTab();
+      case 4:
+        return const _ProgressTab();
+      case 5:
+        return const ProfileScreen();
+      default:
+        return const _OverviewTab();
+    }
   }
 }
 
@@ -140,35 +224,40 @@ class _OverviewTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Welcome section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.success.withValues(alpha: 0.1), Colors.transparent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
-              ),
+            GradientCard(
+              gradientColors: [
+                AppColors.success.withOpacity(0.8),
+                AppColors.success,
+              ],
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Chào mừng Sinh viên!',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.success,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.waving_hand,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Chào mừng Sinh viên!',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Theo dõi tiến độ và quản lý khóa luận của bạn',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey[600],
+                      color: Colors.white.withOpacity(0.9),
                     ),
                   ),
                 ],
@@ -176,242 +265,234 @@ class _OverviewTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             
-            // Thông tin cá nhân
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.person, color: AppColors.success),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Thông tin cá nhân',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow(Icons.badge, 'MSSV:', '2024001'),
-                    _buildInfoRow(Icons.person_outline, 'Họ tên:', 'Nguyễn Văn A'),
-                    _buildInfoRow(Icons.school, 'Lớp:', 'CNTT K17'),
-                    _buildInfoRow(Icons.business, 'Khoa:', 'Công nghệ thông tin'),
-                    _buildInfoRow(Icons.email, 'Email:', 'student@example.com'),
-                  ],
-                ),
+            // Thống kê nhanh
+            const Text(
+              'Thống kê nhanh',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
+            const SizedBox(height: 12),
+              GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              children: [
+                StatCard(
+                  icon: Icons.assignment,
+                  title: 'Trạng thái đề tài',
+                  value: 'Đang thực hiện',
+                  color: AppColors.info,
+                ),
+                StatCard(
+                  icon: Icons.trending_up,
+                  title: 'Tiến độ',
+                  value: '65%',
+                  subtitle: 'Đang tốt',
+                  color: AppColors.warning,
+                ),
+                StatCard(
+                  icon: Icons.task_alt,
+                  title: 'Nhiệm vụ',
+                  value: '3',
+                  subtitle: 'Còn lại',
+                  color: AppColors.error,
+                ),
+                StatCard(
+                  icon: Icons.group,
+                  title: 'Nhóm',
+                  value: 'Nhóm 05',
+                  subtitle: '4 thành viên',
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Thông tin cá nhân
+            const Text(
+              'Thông tin cá nhân',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            InfoCard(
+              icon: Icons.badge,
+              title: 'MSSV',
+              value: '2024001',
+              iconColor: AppColors.primary,
+            ),
+            InfoCard(
+              icon: Icons.person_outline,
+              title: 'Họ tên',
+              value: 'Nguyễn Văn A',
+              iconColor: AppColors.success,
+            ),
+            InfoCard(
+              icon: Icons.school,
+              title: 'Lớp',
+              value: 'CNTT K17',
+              iconColor: AppColors.info,
+            ),
+            InfoCard(
+              icon: Icons.business,
+              title: 'Khoa',
+              value: 'Công nghệ thông tin',
+              iconColor: AppColors.warning,
+            ),            InfoCard(
+              icon: Icons.email,
+              title: 'Email',
+              value: 'student@example.com',
+              iconColor: AppColors.error,
+            ),
+            
             const SizedBox(height: 20),
-
-            // Thống kê nhanh
+            
+            // Actions nhanh
+            const Text(
+              'Hành động nhanh',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
             Row(
               children: [
                 Expanded(
-                  child: _DashboardCard(
-                    title: 'Trạng thái đề tài',
-                    value: 'Đang thực hiện',
-                    icon: Icons.assignment,
-                    color: AppColors.info,
+                  child: QuickActionButton(
+                    icon: Icons.add_task,
+                    label: 'Tạo nhiệm vụ',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tính năng đang phát triển')),
+                      );
+                    },
+                    color: AppColors.success,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _DashboardCard(
-                    title: 'Tiến độ',
-                    value: '65%',
-                    icon: Icons.trending_up,
+                  child: QuickActionButton(
+                    icon: Icons.upload_file,
+                    label: 'Nộp báo cáo',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tính năng đang phát triển')),
+                      );
+                    },
                     color: AppColors.warning,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _DashboardCard(
-                    title: 'Nhiệm vụ còn lại',
-                    value: '3',
-                    icon: Icons.task_alt,
-                    color: AppColors.error,
-                  ),
-                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _DashboardCard(
-                    title: 'Nhóm',
-                    value: 'Nhóm 05',
-                    icon: Icons.group,
-                    color: AppColors.primary,
+                  child: QuickActionButton(
+                    icon: Icons.schedule,
+                    label: 'Lịch hẹn',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tính năng đang phát triển')),
+                      );
+                    },
+                    color: AppColors.info,
                   ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            // Nhiệm vụ gần đây
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.task, color: AppColors.success),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Nhiệm vụ gần đây',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTaskItem('Hoàn thành Chapter 1', 'Hôm nay', true),
-                    _buildTaskItem('Chuẩn bị báo cáo tiến độ', 'Ngày mai', false),
-                    _buildTaskItem('Phỏng vấn người dùng', '3 ngày', false),
-                    _buildTaskItem('Thiết kế giao diện', '1 tuần', false),
-                  ],
-                ),
+            
+            const SizedBox(height: 20),
+            
+            // Tiến độ dự án
+            const Text(
+              'Tiến độ dự án',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Thông báo quan trọng
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    colors: [AppColors.warning.withValues(alpha: 0.1), Colors.transparent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            const SizedBox(height: 12),
+            
+            ModernCard(
+              child: Column(
+                children: [
+                  ProgressIndicatorWidget(
+                    progress: 0.65,
+                    label: 'Tổng tiến độ',
+                    color: AppColors.success,
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.notification_important, color: AppColors.warning),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Thông báo quan trọng',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildNotificationItem(
-                        'Hạn nộp báo cáo tiến độ tháng 12',
-                        '25/12/2024',
-                        AppColors.error,
-                      ),
-                      _buildNotificationItem(
-                        'Họp nhóm với giảng viên hướng dẫn',
-                        '20/12/2024',
-                        AppColors.info,
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  ProgressIndicatorWidget(
+                    progress: 0.8,
+                    label: 'Nghiên cứu lý thuyết',
+                    color: AppColors.info,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  ProgressIndicatorWidget(
+                    progress: 0.4,
+                    label: 'Phát triển ứng dụng',
+                    color: AppColors.warning,
+                  ),
+                  const SizedBox(height: 16),
+                  ProgressIndicatorWidget(
+                    progress: 0.2,
+                    label: 'Viết báo cáo',
+                    color: AppColors.error,
+                  ),
+                ],
               ),
             ),
+            
+            const SizedBox(height: 20),
+            
+            // Thông báo gần đây
+            const Text(
+              'Thông báo gần đây',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            ModernCard(
+              child: Column(
+                children: [
+                  _buildNotificationItem(
+                    'Có nhiệm vụ mới được giao',
+                    '2 giờ trước',
+                    AppColors.info,
+                  ),
+                  _buildNotificationItem(
+                    'Hạn nộp báo cáo tiến độ',
+                    '1 ngày',
+                    AppColors.warning,
+                  ),
+                  _buildNotificationItem(
+                    'Cuộc họp nhóm lúc 14:00',
+                    'Hôm nay',
+                    AppColors.success,
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(icon, size: 16, color: AppColors.success),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem(String task, String deadline, bool isCompleted) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isCompleted ? AppColors.success.withValues(alpha: 0.3) : Colors.grey[200]!,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isCompleted ? AppColors.success : Colors.grey,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    decoration: isCompleted ? TextDecoration.lineThrough : null,
-                    color: isCompleted ? Colors.grey : null,
-                  ),
-                ),
-                Text(
-                  'Hạn: $deadline',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -421,9 +502,9 @@ class _OverviewTab extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -449,87 +530,39 @@ class _OverviewTab extends StatelessWidget {
   }
 }
 
-// Dashboard Card Widget
-class _DashboardCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _DashboardCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [color.withValues(alpha: 0.05), Colors.transparent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 24, color: color),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // Tab Nhóm
 class _GroupTab extends StatelessWidget {
   const _GroupTab();
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Quản lý nhóm',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ModernCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.group, color: AppColors.primary, size: 28),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Quản lý nhóm',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Chức năng quản lý nhóm sẽ được phát triển tại đây.',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 16),
-          Text('Chức năng quản lý nhóm sẽ được phát triển tại đây.'),
         ],
       ),
     );
@@ -542,17 +575,33 @@ class _ThesisTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Quản lý đề tài',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ModernCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.assignment, color: AppColors.info, size: 28),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Quản lý đề tài',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Chức năng quản lý đề tài sẽ được phát triển tại đây.',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 16),
-          Text('Chức năng quản lý đề tài sẽ được phát triển tại đây.'),
         ],
       ),
     );
@@ -565,17 +614,166 @@ class _TaskTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Quản lý nhiệm vụ',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          GradientCard(
+            gradientColors: [
+              AppColors.warning.withOpacity(0.8),
+              AppColors.warning,
+            ],
+            child: Row(
+              children: [
+                Icon(Icons.task, color: Colors.white, size: 28),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Quản lý nhiệm vụ',
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 16),
-          Text('Chức năng quản lý nhiệm vụ sẽ được phát triển tại đây.'),
+          const SizedBox(height: 20),
+          
+          // Nhiệm vụ đang thực hiện
+          const Text(
+            'Nhiệm vụ đang thực hiện',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          ModernCard(
+            child: Column(
+              children: [
+                _buildTaskItem(
+                  'Hoàn thành Chapter 1',
+                  'Hôm nay',
+                  AppColors.success,
+                  0.8,
+                ),
+                const Divider(),
+                _buildTaskItem(
+                  'Chuẩn bị báo cáo tiến độ',
+                  'Ngày mai',
+                  AppColors.warning,
+                  0.3,
+                ),
+                const Divider(),
+                _buildTaskItem(
+                  'Phỏng vấn người dùng',
+                  '3 ngày',
+                  AppColors.info,
+                  0.1,
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Actions
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tính năng đang phát triển')),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Thêm nhiệm vụ'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tính năng đang phát triển')),
+                    );
+                  },
+                  icon: const Icon(Icons.filter_list),
+                  label: const Text('Bộ lọc'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.warning,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskItem(String title, String deadline, Color color, double progress) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              StatusBadge(
+                text: deadline,
+                color: color,
+                icon: Icons.schedule,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 24),
+            child: ProgressIndicatorWidget(
+              progress: progress,
+              color: color,
+              showPercentage: true,
+              height: 6,
+            ),
+          ),
         ],
       ),
     );
@@ -588,17 +786,224 @@ class _ProgressTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Theo dõi tiến độ',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          GradientCard(
+            gradientColors: [
+              AppColors.success.withOpacity(0.8),
+              AppColors.success,
+            ],
+            child: Row(
+              children: [
+                Icon(Icons.bar_chart, color: Colors.white, size: 28),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Theo dõi tiến độ',
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 16),
-          Text('Chức năng theo dõi tiến độ sẽ được phát triển tại đây.'),
+          const SizedBox(height: 20),
+          
+          // Tổng quan tiến độ
+          StatCard(
+            icon: Icons.timeline,
+            title: 'Tiến độ tổng thể',
+            value: '65%',
+            subtitle: 'Đang đạt mục tiêu',
+            color: AppColors.success,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          const Text(
+            'Chi tiết tiến độ từng giai đoạn',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          ModernCard(
+            child: Column(
+              children: [
+                _buildProgressPhase(
+                  'Nghiên cứu & Phân tích',
+                  0.9,
+                  AppColors.success,
+                  'Hoàn thành',
+                ),
+                const SizedBox(height: 16),
+                _buildProgressPhase(
+                  'Thiết kế hệ thống',
+                  0.7,
+                  AppColors.info,
+                  'Đang thực hiện',
+                ),
+                const SizedBox(height: 16),
+                _buildProgressPhase(
+                  'Phát triển ứng dụng',
+                  0.4,
+                  AppColors.warning,
+                  'Đang thực hiện',
+                ),
+                const SizedBox(height: 16),
+                _buildProgressPhase(
+                  'Kiểm thử & Triển khai',
+                  0.1,
+                  AppColors.error,
+                  'Chưa bắt đầu',
+                ),
+                const SizedBox(height: 16),
+                _buildProgressPhase(
+                  'Hoàn thiện báo cáo',
+                  0.2,
+                  AppColors.error,
+                  'Đang chuẩn bị',
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Milestone quan trọng
+          const Text(
+            'Milestone quan trọng',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          ModernCard(
+            child: Column(
+              children: [
+                _buildMilestone(
+                  'Báo cáo tiến độ tháng 1',
+                  '15/01/2025',
+                  true,
+                  AppColors.success,
+                ),
+                const Divider(),
+                _buildMilestone(
+                  'Demo sản phẩm lần 1',
+                  '28/02/2025',
+                  false,
+                  AppColors.warning,
+                ),
+                const Divider(),
+                _buildMilestone(
+                  'Nộp báo cáo hoàn thiện',
+                  '15/04/2025',
+                  false,
+                  AppColors.info,
+                ),
+                const Divider(),
+                _buildMilestone(
+                  'Bảo vệ khóa luận',
+                  '30/05/2025',
+                  false,
+                  AppColors.primary,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressPhase(String title, double progress, Color color, String status) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            StatusBadge(
+              text: status,
+              color: color,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ProgressIndicatorWidget(
+          progress: progress,
+          color: color,
+          showPercentage: true,
+          height: 8,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMilestone(String title, String date, bool isCompleted, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: isCompleted ? color : Colors.transparent,
+              border: Border.all(color: color, width: 2),
+              shape: BoxShape.circle,
+            ),
+            child: isCompleted
+                ? Icon(Icons.check, color: Colors.white, size: 12)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                    color: isCompleted ? Colors.grey[600] : Colors.black87,
+                  ),
+                ),
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isCompleted)
+            Icon(Icons.check_circle, color: color, size: 20),
         ],
       ),
     );

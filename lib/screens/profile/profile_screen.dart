@@ -17,7 +17,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = GlobalKey<FormState>();
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
   late ProfileRepository _profileRepository;
   final ApiService _apiService = ApiService();
   final Logger _logger = Logger('ProfileScreen');
@@ -26,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   bool _isSaving = false;
   int _userType = 0;
   String _userId = '';
-  
+
   // Information fields
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -35,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   DateTime _selectedDate = DateTime(1970, 1, 1);
   int _selectedGender = 0; // 0: Nam, 1: Nữ, 2: Khác
 
-  // Student specific fields 
+  // Student specific fields
   final _studentCodeController = TextEditingController();
   final _classNameController = TextEditingController();
   String _selectedMajorId = '';
@@ -56,20 +57,21 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   void initState() {
     super.initState();
     _profileRepository = ProfileRepository(apiService: _apiService);
-    
+
     // Use Future.microtask to ensure we run this after build
     Future.microtask(() {
-      if (mounted) {      // Get current user information from AuthBloc
-      final authState = context.read<AuthBloc>().state;
-      if (authState is Authenticated) {
-        setState(() {
-          _userId = authState.user['id'] ?? '';
-          _userType = authState.user['user_type'] ?? 0;
-          _logger.debug('User type set to: $_userType');
-        });
-        _loadUserProfile();
-        _loadDependencies();
-      }
+      if (mounted) {
+        // Get current user information from AuthBloc
+        final authState = context.read<AuthBloc>().state;
+        if (authState is Authenticated) {
+          setState(() {
+            _userId = authState.user['id'] ?? '';
+            _userType = authState.user['user_type'] ?? 0;
+            _logger.debug('User type set to: $_userType');
+          });
+          _loadUserProfile();
+          _loadDependencies();
+        }
       }
     });
   }
@@ -87,10 +89,13 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
     _emailController.dispose();
     _titleController.dispose();
     super.dispose();
-  }  // Load majors for student, departments for lecturer
+  } // Load majors for student, departments for lecturer
+
   Future<void> _loadDependencies() async {
     try {
-      _logger.debug('Loading dependencies for user type: $_userType');      if (_userType == AppConfig.userTypeStudent) { // Student (2)
+      _logger.debug('Loading dependencies for user type: $_userType');
+      if (_userType == AppConfig.userTypeStudent) {
+        // Student (2)
         // Load majors
         final response = await _apiService.get(ApiConfig.majors);
         _logger.debug('Loaded majors: $response');
@@ -101,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           } else if (response is Map && response.containsKey('data')) {
             majorsList = List<Map<String, dynamic>>.from(response['data']);
           }
-          
+
           setState(() {
             _majors = majorsList;
             _logger.debug('Majors parsed: $_majors');
@@ -112,7 +117,8 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           });
           _logDataTypes();
         }
-      } else if (_userType == AppConfig.userTypeLecturer) { // Lecturer (3)
+      } else if (_userType == AppConfig.userTypeLecturer) {
+        // Lecturer (3)
         // Load departments
         final response = await _apiService.get(ApiConfig.departments);
         _logger.debug('Loaded departments: $response');
@@ -123,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           } else if (response is Map && response.containsKey('data')) {
             departmentsList = List<Map<String, dynamic>>.from(response['data']);
           }
-          
+
           setState(() {
             _departments = departmentsList;
             _logger.debug('Departments parsed: $_departments');
@@ -139,7 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
       _logger.error('Error loading dependencies: $e');
       _showErrorSnackBar('Không thể tải dữ liệu: $e');
     }
-  }  // Load user profile based on user type
+  } // Load user profile based on user type
+
   Future<void> _loadUserProfile() async {
     setState(() {
       _isLoading = true;
@@ -148,15 +155,20 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
     try {
       _logger.debug('Loading user profile for user type: $_userType');
       final profile = await _profileRepository.getUserProfile(_userType);
-      _logger.debug('Profile retrieved: ${profile.containsKey('error') ? 'Error: ${profile["error"]}' : 'Success'}');
+      _logger.debug(
+        'Profile retrieved: ${profile.containsKey('error') ? 'Error: ${profile["error"]}' : 'Success'}',
+      );
 
       if (profile.containsKey('error')) {
         // No profile exists yet - set default values
-        _setDefaultValues();      } else {
+        _setDefaultValues();
+      } else {
         // Parse profile data
-        if (_userType == AppConfig.userTypeStudent) { // Student (2)
+        if (_userType == AppConfig.userTypeStudent) {
+          // Student (2)
           _parseStudentProfile(profile);
-        } else if (_userType == AppConfig.userTypeLecturer) { // Lecturer (3)
+        } else if (_userType == AppConfig.userTypeLecturer) {
+          // Lecturer (3)
           _parseLecturerProfile(profile);
         }
       }
@@ -181,13 +193,14 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
       _addressController.text = information['address'] ?? '';
       _phoneController.text = information['tel_phone'] ?? '';
       _selectedGender = information['gender'] ?? 0;
-      
+
       try {
         _selectedDate = DateTime.parse(information['date_of_birth']);
       } catch (e) {
         _selectedDate = DateTime(1970, 1, 1);
       }
-    }    if (profile['student_info'] != null) {
+    }
+    if (profile['student_info'] != null) {
       final studentInfo = profile['student_info'];
       _studentInfoId = studentInfo['id'];
       _studentCodeController.text = studentInfo['student_code'] ?? '';
@@ -208,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
       _addressController.text = information['address'] ?? '';
       _phoneController.text = information['tel_phone'] ?? '';
       _selectedGender = information['gender'] ?? 0;
-      
+
       try {
         _selectedDate = DateTime.parse(information['date_of_birth']);
       } catch (e) {
@@ -224,20 +237,24 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
       _titleController.text = lecturerInfo['title'] ?? '';
       _selectedDepartment = lecturerInfo['department'] ?? 1;
     }
-  }  // Set default values for new profiles
+  } // Set default values for new profiles
+
   void _setDefaultValues() {
     _firstNameController.text = '';
     _lastNameController.text = '';
     _addressController.text = '';
     _phoneController.text = '';
     _selectedGender = 0;
-    _selectedDate = DateTime(1970, 1, 1);    if (_userType == AppConfig.userTypeStudent) { // Student (2)
+    _selectedDate = DateTime(1970, 1, 1);
+    if (_userType == AppConfig.userTypeStudent) {
+      // Student (2)
       _studentCodeController.text = '';
       _classNameController.text = '';
       if (_majors.isNotEmpty) {
         _selectedMajorId = _majors[0]['id'].toString();
       }
-    } else if (_userType == AppConfig.userTypeLecturer) { // Lecturer (3)
+    } else if (_userType == AppConfig.userTypeLecturer) {
+      // Lecturer (3)
       _lecturerCodeController.text = '';
       _emailController.text = '';
       _titleController.text = '';
@@ -264,8 +281,10 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
         'gender': _selectedGender,
         'address': _addressController.text,
         'tel_phone': _phoneController.text,
-      };      // Prepare request data based on user type
-      Map<String, dynamic> requestData = {};      if (_userType == AppConfig.userTypeStudent) { // Student (2)
+      }; // Prepare request data based on user type
+      Map<String, dynamic> requestData = {};
+      if (_userType == AppConfig.userTypeStudent) {
+        // Student (2)
         // Prepare student-specific data
         final studentInfoData = {
           'student_code': _studentCodeController.text,
@@ -277,7 +296,8 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           'information': informationData,
           'student_info': studentInfoData,
         };
-      } else if (_userType == AppConfig.userTypeLecturer) { // Lecturer (3)
+      } else if (_userType == AppConfig.userTypeLecturer) {
+        // Lecturer (3)
         // Prepare lecturer-specific data
         final lecturerInfoData = {
           'lecturer_code': _lecturerCodeController.text,
@@ -293,7 +313,10 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
       }
 
       // Send data to server
-      final result = await _profileRepository.createOrUpdateProfile(_userType, requestData);
+      final result = await _profileRepository.createOrUpdateProfile(
+        _userType,
+        requestData,
+      );
 
       if (result.containsKey('error')) {
         _showErrorSnackBar('Lỗi khi lưu thông tin: ${result['error']}');
@@ -329,20 +352,14 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   // Show error message
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   // Show success message
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -350,13 +367,21 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   void _logDataTypes() {
     _logger.debug('--- DROPDOWN DATA TYPES ---');
     if (_majors.isNotEmpty) {
-      _logger.debug('Major ID type: ${_majors[0]['id'].runtimeType} - Value: ${_majors[0]['id']}');
-      _logger.debug('Selected major ID type: ${_selectedMajorId.runtimeType} - Value: $_selectedMajorId');
+      _logger.debug(
+        'Major ID type: ${_majors[0]['id'].runtimeType} - Value: ${_majors[0]['id']}',
+      );
+      _logger.debug(
+        'Selected major ID type: ${_selectedMajorId.runtimeType} - Value: $_selectedMajorId',
+      );
     }
-    
+
     if (_departments.isNotEmpty) {
-      _logger.debug('Department ID type: ${_departments[0]['id'].runtimeType} - Value: ${_departments[0]['id']}');
-      _logger.debug('Selected department ID type: ${_selectedDepartment.runtimeType} - Value: $_selectedDepartment');
+      _logger.debug(
+        'Department ID type: ${_departments[0]['id'].runtimeType} - Value: ${_departments[0]['id']}',
+      );
+      _logger.debug(
+        'Selected department ID type: ${_selectedDepartment.runtimeType} - Value: $_selectedDepartment',
+      );
     }
     _logger.debug('-------------------------');
   }
@@ -364,37 +389,39 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading 
-        ? const Center(child: LoadingIndicator()) 
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Basic information card
-                  _buildInformationCard(),
-                  const SizedBox(height: 20),                  // User type specific card
-                  _userType == AppConfig.userTypeStudent 
-                    ? _buildStudentCard() // Student (type 2)
-                    : _buildLecturerCard(), // Lecturer (type 3)
-                  const SizedBox(height: 30),
-                  // Save button
-                  Center(                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: CustomButton(
-                        onPressed: _isSaving ? null : _saveProfile,
-                        isLoading: _isSaving,
-                        text: 'Lưu thông tin',
+      body:
+          _isLoading
+              ? const Center(child: LoadingIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Basic information card
+                      _buildInformationCard(),
+                      const SizedBox(height: 20), // User type specific card
+                      _userType == AppConfig.userTypeStudent
+                          ? _buildStudentCard() // Student (type 2)
+                          : _buildLecturerCard(), // Lecturer (type 3)
+                      const SizedBox(height: 30),
+                      // Save button
+                      Center(
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.8,
+                          child: CustomButton(
+                            onPressed: _isSaving ? null : _saveProfile,
+                            isLoading: _isSaving,
+                            text: 'Lưu thông tin',
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
-                  const SizedBox(height: 30),
-                ],
+                ),
               ),
-            ),
-          ),
     );
   }
 
@@ -402,9 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   Widget _buildInformationCard() {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -412,10 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           children: [
             const Text(
               'Thông tin cá nhân',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             const SizedBox(height: 16),
@@ -479,9 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      DateFormat('dd/MM/yyyy').format(_selectedDate),
-                    ),
+                    Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
                     const Icon(Icons.calendar_today),
                   ],
                 ),
@@ -528,9 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   Widget _buildStudentCard() {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -538,10 +556,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           children: [
             const Text(
               'Thông tin sinh viên',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             const SizedBox(height: 16),
@@ -568,29 +583,37 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),            // Major selection
+            const SizedBox(height: 16), // Major selection
             DropdownButtonFormField<String>(
-              value: _selectedMajorId.isNotEmpty && _majors.isNotEmpty && _majors.any((m) => m['id'].toString() == _selectedMajorId) 
-                  ? _selectedMajorId 
-                  : (_majors.isNotEmpty ? _majors[0]['id'].toString() : ''),
+              value:
+                  _selectedMajorId.isNotEmpty &&
+                          _majors.isNotEmpty &&
+                          _majors.any(
+                            (m) => m['id'].toString() == _selectedMajorId,
+                          )
+                      ? _selectedMajorId
+                      : (_majors.isNotEmpty ? _majors[0]['id'].toString() : ''),
               decoration: const InputDecoration(
                 labelText: 'Chuyên ngành',
                 border: OutlineInputBorder(),
               ),
-              items: _majors.isEmpty 
-                ? [const DropdownMenuItem<String>(
-                    value: '',
-                    child: Text('Đang tải...'),
-                  )] 
-                : _majors.map((major) {
-                    String id = major['id'].toString();
-                    String name = major['name'].toString();
-                    _logger.debug('Major item: $id: $name');
-                    return DropdownMenuItem<String>(
-                      value: id,
-                      child: Text(name),
-                    );
-                  }).toList(),
+              items:
+                  _majors.isEmpty
+                      ? [
+                        const DropdownMenuItem<String>(
+                          value: '',
+                          child: Text('Đang tải...'),
+                        ),
+                      ]
+                      : _majors.map((major) {
+                        String id = major['id'].toString();
+                        String name = major['name'].toString();
+                        _logger.debug('Major item: $id: $name');
+                        return DropdownMenuItem<String>(
+                          value: id,
+                          child: Text(name),
+                        );
+                      }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedMajorId = value ?? '';
@@ -613,9 +636,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
   Widget _buildLecturerCard() {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -623,10 +644,7 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
           children: [
             const Text(
               'Thông tin giảng viên',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             const SizedBox(height: 16),
@@ -678,29 +696,37 @@ class _ProfileScreenState extends State<ProfileScreen> {  final _formKey = Globa
                 return null;
               },
             ),
-            const SizedBox(height: 16),            // Department selection
+            const SizedBox(height: 16), // Department selection
             DropdownButtonFormField<int>(
-              value: _departments.isNotEmpty && _selectedDepartment != 0 
-                  ? _selectedDepartment 
-                  : (_departments.isNotEmpty ? _departments[0]['id'] : 1),
+              value:
+                  _departments.isNotEmpty && _selectedDepartment != 0
+                      ? _selectedDepartment
+                      : (_departments.isNotEmpty ? _departments[0]['id'] : 1),
               decoration: const InputDecoration(
                 labelText: 'Khoa',
                 border: OutlineInputBorder(),
               ),
-              items: _departments.isEmpty 
-                ? [const DropdownMenuItem<int>(
-                    value: 1,
-                    child: Text('Đang tải...'),
-                  )] 
-                : _departments.map((department) {
-                    int id = department['id'] is int ? department['id'] : int.tryParse(department['id'].toString()) ?? 1;
-                    String name = department['name'].toString();
-                    _logger.debug('Department item: $id: $name');
-                    return DropdownMenuItem<int>(
-                      value: id,
-                      child: Text(name),
-                    );
-                  }).toList(),
+              items:
+                  _departments.isEmpty
+                      ? [
+                        const DropdownMenuItem<int>(
+                          value: 1,
+                          child: Text('Đang tải...'),
+                        ),
+                      ]
+                      : _departments.map((department) {
+                        int id =
+                            department['id'] is int
+                                ? department['id']
+                                : int.tryParse(department['id'].toString()) ??
+                                    1;
+                        String name = department['name'].toString();
+                        _logger.debug('Department item: $id: $name');
+                        return DropdownMenuItem<int>(
+                          value: id,
+                          child: Text(name),
+                        );
+                      }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedDepartment = value ?? 1;
