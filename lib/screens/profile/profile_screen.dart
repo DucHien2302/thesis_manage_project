@@ -309,16 +309,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
         requestData,
       );
 
-      _logger.debug('Profile save result: $result');
-
-      if (result.containsKey('error')) {
+      _logger.debug('Profile save result: $result');      if (result.containsKey('error')) {
         _logger.error('Profile save failed with error: ${result['error']}');
-        _showErrorSnackBar('Lỗi khi lưu thông tin: ${result['error']}');
+        
+        // Parse error message for better user experience
+        String errorMessage = result['error'].toString();
+        if (errorMessage.contains('Connection closed') || 
+            errorMessage.contains('connection timeout') ||
+            errorMessage.contains('network error')) {
+          errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra internet và thử lại.';
+        } else if (errorMessage.contains('500')) {
+          errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau ít phút.';
+        }
+        
+        _showErrorSnackBar('Lỗi khi lưu thông tin: $errorMessage');
       } else {
         _logger.debug('Profile save successful');
+        _showSuccessSnackBar('Thông tin đã được lưu thành công');
+        
+        // Add a small delay before reloading to avoid API conflicts
+        await Future.delayed(const Duration(milliseconds: 1000));
+        
         // Reload profile to get updated IDs
         await _loadUserProfile();
-        _showSuccessSnackBar('Thông tin đã được lưu thành công');
       }
     } catch (e) {
       _showErrorSnackBar('Lỗi khi xử lý thông tin: $e');

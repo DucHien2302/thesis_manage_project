@@ -44,7 +44,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileError(e.toString()));
     }
   }
-
   FutureOr<void> _onSaveProfile(SaveProfile event, Emitter<ProfileState> emit) async {
     emit(ProfileSaving());
     try {
@@ -54,10 +53,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       );
 
       if (result.containsKey('error')) {
-        emit(ProfileError(result['error']));
+        emit(ProfileError(result['error'].toString()));
       } else {
-        // Re-load the profile
-        add(LoadProfile(userType: event.userType, userId: event.userId));
+        // Don't reload profile immediately to avoid duplicate API calls
+        // The ProfileScreen will handle reloading if needed
         emit(ProfileSaved());
       }
     } catch (e) {

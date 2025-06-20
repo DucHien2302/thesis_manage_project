@@ -63,63 +63,116 @@ class ProfileRepository {
       _logger.error('Error getting student profile: $e');
       return {'error': e.toString()};
     }
-  }
-  /// Create student profile information
+  }  /// Create student profile information
   /// 
   /// [data]: Map containing student profile data with information and student_info
   Future<Map<String, dynamic>> createStudentProfile(Map<String, dynamic> data) async {
-    try {
-      _logger.debug('Creating student profile with data: $data');
-      final response = await _apiService.post(
-        ApiConfig.studentProfile,
-        body: data,
-      );
-      _logger.debug('Student profile create response: $response');
-      
-      // Even if response is null or empty, consider it successful
-      if (response == null) {
-        return {'success': true, 'message': 'Profile created successfully'};
+    int maxRetries = 3;
+    int currentRetry = 0;
+    
+    while (currentRetry < maxRetries) {
+      try {
+        _logger.debug('Creating student profile with data (attempt ${currentRetry + 1}/$maxRetries): $data');
+        final response = await _apiService.post(
+          ApiConfig.studentProfile,
+          body: data,
+        );
+        _logger.debug('Student profile create response: $response');
+        
+        // Even if response is null or empty, consider it successful
+        if (response == null) {
+          return {'success': true, 'message': 'Profile created successfully'};
+        }
+        
+        if (response is Map<String, dynamic>) {
+          return response;
+        }
+        
+        return {'success': true, 'data': response, 'message': 'Profile created successfully'};
+      } catch (e) {
+        _logger.error('Error creating student profile (attempt ${currentRetry + 1}/$maxRetries): $e');
+        currentRetry++;
+        
+        // Check if this is a connection error that might be worth retrying
+        final errorMessage = e.toString().toLowerCase();
+        bool isRetryableError = errorMessage.contains('connection closed') ||
+                               errorMessage.contains('connection timeout') ||
+                               errorMessage.contains('socket exception') ||
+                               errorMessage.contains('network error');
+        
+        if (currentRetry < maxRetries && isRetryableError) {
+          _logger.debug('Retryable error detected, waiting before retry...');
+          await Future.delayed(Duration(milliseconds: 1000 * currentRetry)); // Progressive delay
+          continue;
+        } else {
+          // Not retryable or max retries reached
+          return {'error': e.toString()};
+        }
       }
-      
-      if (response is Map<String, dynamic>) {
-        return response;
-      }
-      
-      return {'success': true, 'data': response, 'message': 'Profile created successfully'};
-    } catch (e) {
-      _logger.error('Error creating student profile: $e');
-      return {'error': e.toString()};
     }
-  }/// Update student profile information
+    
+    return {'error': 'Max retries exceeded'};
+  }  /// Update student profile information
   /// 
   /// [data]: Map containing updated student profile data with information and student_info
   Future<Map<String, dynamic>> updateStudentProfile(Map<String, dynamic> data) async {
-    try {
-      _logger.debug('Updating student profile with data: $data');
-      final response = await _apiService.put(
-        ApiConfig.studentProfile,
-        body: data,
-      );
-      _logger.debug('Student profile update response: $response');
-      
-      // Even if response is null or empty, consider it successful
-      // as long as no exception was thrown
-      if (response == null) {
-        _logger.debug('Response is null but no exception - considering successful');
-        return {'success': true, 'message': 'Profile updated successfully'};
+    int maxRetries = 2;
+    int currentRetry = 0;
+    
+    while (currentRetry < maxRetries) {
+      try {
+        _logger.debug('Updating student profile with data (attempt ${currentRetry + 1}/$maxRetries): $data');
+        final response = await _apiService.put(
+          ApiConfig.studentProfile,
+          body: data,
+        );
+        _logger.debug('Student profile update response: $response');
+        
+        // Even if response is null or empty, consider it successful
+        // as long as no exception was thrown
+        if (response == null) {
+          _logger.debug('Response is null but no exception - considering successful');
+          return {'success': true, 'message': 'Profile updated successfully'};
+        }
+        
+        // If response is a Map, return it directly
+        if (response is Map<String, dynamic>) {
+          return response;
+        }
+        
+        // For other response types, wrap in success response
+        return {'success': true, 'data': response, 'message': 'Profile updated successfully'};
+      } catch (e) {
+        _logger.error('Error updating student profile (attempt ${currentRetry + 1}/$maxRetries): $e');
+        currentRetry++;
+        
+        // Check if this is a server error (500) that might indicate profile doesn't exist
+        final errorMessage = e.toString();
+        if (errorMessage.contains('Mã lỗi: 500') || errorMessage.contains('500')) {
+          _logger.debug('Received 500 error - profile might not exist, will need to create');
+          // Return a special error that indicates we should try creating instead
+          return {'error': 'PROFILE_NOT_EXISTS', 'original_error': errorMessage};
+        }
+        
+        // Check if this is a connection error that might be worth retrying
+        final errorLower = errorMessage.toLowerCase();
+        bool isRetryableError = errorLower.contains('connection closed') ||
+                               errorLower.contains('connection timeout') ||
+                               errorLower.contains('socket exception') ||
+                               errorLower.contains('network error');
+        
+        if (currentRetry < maxRetries && isRetryableError) {
+          _logger.debug('Retryable connection error detected, waiting before retry...');
+          await Future.delayed(Duration(milliseconds: 1000 * currentRetry)); // Progressive delay
+          continue;
+        } else {
+          // Not retryable or max retries reached
+          return {'error': 'Lỗi kết nối mạng: $e'};
+        }
       }
-      
-      // If response is a Map, return it directly
-      if (response is Map<String, dynamic>) {
-        return response;
-      }
-      
-      // For other response types, wrap in success response
-      return {'success': true, 'data': response, 'message': 'Profile updated successfully'};
-    } catch (e) {
-      _logger.error('Error updating student profile: $e');
-      return {'error': e.toString()};
     }
+    
+    return {'error': 'Max retries exceeded'};
   }
 
   /// Get lecturer profile information
@@ -158,8 +211,7 @@ class ProfileRepository {
       _logger.error('Error creating lecturer profile: $e');
       return {'error': e.toString()};
     }
-  }
-  /// Update lecturer profile information
+  }  /// Update lecturer profile information
   /// 
   /// [data]: Map containing updated lecturer profile data with information and lecturer_info
   Future<Map<String, dynamic>> updateLecturerProfile(Map<String, dynamic> data) async {
@@ -187,7 +239,16 @@ class ProfileRepository {
       return {'success': true, 'data': response, 'message': 'Profile updated successfully'};
     } catch (e) {
       _logger.error('Error updating lecturer profile: $e');
-      return {'error': e.toString()};
+      
+      // Check if this is a server error (500) that might indicate profile doesn't exist
+      final errorMessage = e.toString();
+      if (errorMessage.contains('Mã lỗi: 500') || errorMessage.contains('500')) {
+        _logger.debug('Received 500 error - profile might not exist, will need to create');
+        // Return a special error that indicates we should try creating instead
+        return {'error': 'PROFILE_NOT_EXISTS', 'original_error': errorMessage};
+      }
+      
+      return {'error': 'Lỗi kết nối mạng: $e'};
     }
   }/// Get complete user profile based on user type
   Future<Map<String, dynamic>> getUserProfile(int userType) async {
@@ -204,29 +265,75 @@ class ProfileRepository {
       _logger.error('Error getting user profile: $e');
       return {'error': e.toString()};
     }
-  }
-  /// Create or update complete user profile based on user type
-  Future<Map<String, dynamic>> createOrUpdateProfile(int userType, Map<String, dynamic> data) async {
-    try {      switch (userType) {
+  }  /// Create or update complete user profile based on user type
+  /// 
+  /// [userType]: Type of user (student=2, lecturer=3)
+  /// [data]: Profile data to save
+  /// [forceUpdate]: If true, will attempt update first, then create if update fails
+  Future<Map<String, dynamic>> createOrUpdateProfile(
+    int userType, 
+    Map<String, dynamic> data, {
+    bool forceUpdate = true,
+  }) async {
+    try {
+      switch (userType) {
         case AppConfig.userTypeLecturer: // Lecturer (3)
-          final lecturerProfile = await getLecturerProfile();
-          if (lecturerProfile.containsKey('error') || 
-              !lecturerProfile.containsKey('lecturer_info')) {
-            // No profile exists, create a new one
-            return await createLecturerProfile(data);
+          if (forceUpdate) {
+            // Try to update first, if it fails then create
+            _logger.debug('Attempting to update lecturer profile first');
+            final updateResult = await updateLecturerProfile(data);
+            
+            // Check if update failed because profile doesn't exist
+            if (updateResult.containsKey('error')) {
+              if (updateResult['error'] == 'PROFILE_NOT_EXISTS') {
+                _logger.debug('Profile doesn\'t exist, creating new profile');
+                return await createLecturerProfile(data);
+              } else {
+                // Other errors, return as-is
+                return updateResult;
+              }
+            } else {
+              // Update successful
+              return updateResult;
+            }
           } else {
-            // Update existing profile
-            return await updateLecturerProfile(data);
+            // Check if profile exists first (old behavior)
+            final lecturerProfile = await getLecturerProfile();
+            if (lecturerProfile.containsKey('error') || 
+                !lecturerProfile.containsKey('lecturer_info')) {
+              return await createLecturerProfile(data);
+            } else {
+              return await updateLecturerProfile(data);
+            }
           }
         case AppConfig.userTypeStudent: // Student (2)
-          final studentProfile = await getStudentProfile();
-          if (studentProfile.containsKey('error') || 
-              !studentProfile.containsKey('student_info')) {
-            // No profile exists, create a new one
-            return await createStudentProfile(data);
+          if (forceUpdate) {
+            // Try to update first, if it fails then create
+            _logger.debug('Attempting to update student profile first');
+            final updateResult = await updateStudentProfile(data);
+            
+            // Check if update failed because profile doesn't exist
+            if (updateResult.containsKey('error')) {
+              if (updateResult['error'] == 'PROFILE_NOT_EXISTS') {
+                _logger.debug('Profile doesn\'t exist, creating new profile');
+                return await createStudentProfile(data);
+              } else {
+                // Other errors, return as-is
+                return updateResult;
+              }
+            } else {
+              // Update successful
+              return updateResult;
+            }
           } else {
-            // Update existing profile
-            return await updateStudentProfile(data);
+            // Check if profile exists first (old behavior)
+            final studentProfile = await getStudentProfile();
+            if (studentProfile.containsKey('error') || 
+                !studentProfile.containsKey('student_info')) {
+              return await createStudentProfile(data);
+            } else {
+              return await updateStudentProfile(data);
+            }
           }
         default:
           return {'error': 'Unsupported user type'};
