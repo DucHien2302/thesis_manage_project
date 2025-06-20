@@ -45,13 +45,11 @@ class GroupRepository {
   /// Transfer group leadership to another member
   Future<void> transferGroupLeadership(String groupId, String newLeaderId) async {
     await _apiService.put('/group/$groupId/transfer-leader/$newLeaderId');
-  }
-
-  /// Send an invitation to join a group
-  Future<void> sendInvite(String receiverId) async {
+  }  /// Send an invitation to join a group
+  Future<void> sendInvite(String receiverId, {String? groupId}) async {
     await _apiService.post(
       '/invite/send',
-      body: InviteCreateRequest(receiverId: receiverId).toJson(),
+      body: InviteCreateRequest(receiverId: receiverId, groupId: groupId).toJson(),
     );
   }
 
@@ -82,6 +80,16 @@ class GroupRepository {
   /// Delete group
   Future<void> deleteGroup(String groupId) async {
     await _apiService.delete('/group/$groupId');
+  }
+
+  /// Get the current user's group (if any)
+  Future<GroupModel?> getCurrentUserGroup() async {
+    try {
+      final groups = await getMyGroups();
+      return groups.isNotEmpty ? groups.first : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Get all invitations for the current user (both sent and received)

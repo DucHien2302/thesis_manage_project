@@ -138,8 +138,14 @@ Map<String, dynamic> _$AllInvitesResponseToJson(AllInvitesResponse instance) =>
     };
 
 InviteCreateRequest _$InviteCreateRequestFromJson(Map<String, dynamic> json) =>
-    InviteCreateRequest(receiverId: json['receiver_id'] as String);
+    InviteCreateRequest(
+      receiverId: json['receiver_id'] as String,
+      groupId: json['group_id'] as String?,
+    );
 
 Map<String, dynamic> _$InviteCreateRequestToJson(
   InviteCreateRequest instance,
-) => <String, dynamic>{'receiver_id': instance.receiverId};
+) => <String, dynamic>{
+  'receiver_id': instance.receiverId,
+  'group_id': instance.groupId,
+};

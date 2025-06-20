@@ -219,7 +219,7 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
                           children: [                            
                             if (profileState is ProfileLoaded && profileState.lecturerProfile != null) ...[
                               Text(
-                                '${profileState.lecturerProfile!.information.lastName} ${profileState.lecturerProfile!.information.firstName}',
+                                '${profileState.lecturerProfile!.information.firstName} ${profileState.lecturerProfile!.information.lastName}',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

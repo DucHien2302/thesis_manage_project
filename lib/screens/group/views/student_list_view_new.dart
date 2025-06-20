@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/models/student_models.dart';
+import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/repositories/student_repository.dart';
+import 'package:thesis_manage_project/repositories/group_repository.dart';
+import 'package:thesis_manage_project/repositories/auth_repository.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/components/animated_loading.dart';
@@ -18,6 +21,8 @@ class StudentListView extends StatefulWidget {
 class _StudentListViewState extends State<StudentListView>
     with AutomaticKeepAliveClientMixin {
   late StudentRepository _studentRepository;
+  late GroupRepository _groupRepository;
+  late AuthRepository _authRepository;
   late GroupStateManager _groupStateManager;
   List<StudentModel> _students = [];
   List<StudentModel> _filteredStudents = [];
@@ -29,10 +34,13 @@ class _StudentListViewState extends State<StudentListView>
 
   @override
   bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
     _studentRepository = StudentRepository(apiService: ApiService());
+    _groupRepository = GroupRepository(apiService: ApiService());
+    _authRepository = AuthRepository(apiService: ApiService());
     _groupStateManager = GroupStateManager();
     _loadStudents();
   }
@@ -513,6 +521,7 @@ class _StudentListViewState extends State<StudentListView>
       ),
     );
   }
+
   Widget _buildStudentCard(StudentModel student) {
     final bool hasInvited = _sentInvites.contains(student.id);
 
@@ -524,87 +533,96 @@ class _StudentListViewState extends State<StudentListView>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
         ),
-        child: IntrinsicHeight(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.marginMedium),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Avatar
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-                  ),
-                  child: Center(
-                    child: Text(
-                      student.fullName.isNotEmpty
-                          ? student.fullName[0].toUpperCase()
-                          : 'S',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.marginMedium),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                ),
+                child: Center(
+                  child: Text(
+                    student.fullName.isNotEmpty
+                        ? student.fullName[0].toUpperCase()
+                        : 'S',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
-                const SizedBox(width: AppDimens.marginMedium),
-                // Student Info
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        student.fullName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+              ),
+              const SizedBox(width: AppDimens.marginMedium),
+              // Student Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      student.fullName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'MSSV: ${student.studentCode}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'MSSV: ${student.studentCode}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Ngành: ${student.majorName}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          'Ngành: ${student.majorName}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ),
-                    ],
-                  ),
+                        if (_groupStateManager.currentUserGroup != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+                            ),
+                            child: Text(
+                              'Khả dụng',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppDimens.marginRegular),
-                // Action Button
-                Flexible(
-                  flex: 1,
-                  child: _buildActionButton(student, hasInvited),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: AppDimens.marginMedium),
+              // Action Button
+              _buildActionButton(student, hasInvited),
+            ],
           ),
         ),
       ),
     );
   }
+
   Widget _buildActionButton(StudentModel student, bool hasInvited) {
     final currentUserGroup = _groupStateManager.currentUserGroup;
     
@@ -612,33 +630,30 @@ class _StudentListViewState extends State<StudentListView>
     if (currentUserGroup != null && !_isCurrentUserGroupLeader) {
       return Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
+          horizontal: 12,
+          vertical: 8,
         ),
         decoration: BoxDecoration(
           color: AppColors.textSecondary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
           border: Border.all(color: AppColors.textSecondary.withOpacity(0.3)),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.block,
-              size: 14,
+              size: 16,
               color: AppColors.textSecondary,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 4),
             Text(
               'Không có quyền',
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 8,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -648,69 +663,51 @@ class _StudentListViewState extends State<StudentListView>
     if (hasInvited) {
       return Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
+          horizontal: 12,
+          vertical: 8,
         ),
         decoration: BoxDecoration(
           color: AppColors.warning.withOpacity(0.1),
           borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
           border: Border.all(color: AppColors.warning.withOpacity(0.3)),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.schedule,
-              size: 14,
+              size: 16,
               color: AppColors.warning,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 4),
             Text(
               'Đã mời',
               style: TextStyle(
                 color: AppColors.warning,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
 
-    return SizedBox(
-      width: 60,
-      child: ElevatedButton(
-        onPressed: () => _sendInvite(student),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textLight,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 6,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-          ),
-          elevation: 2,
-          minimumSize: const Size(0, 0),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return ElevatedButton.icon(
+      onPressed: () => _sendInvite(student),
+      icon: const Icon(Icons.person_add, size: 18),
+      label: const Text('Mời'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.marginMedium,
+          vertical: 8,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.person_add, size: 14),
-            const SizedBox(height: 2),
-            Text(
-              'Mời',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
         ),
+        elevation: 2,
       ),
     );
   }
