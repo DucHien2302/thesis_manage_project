@@ -46,14 +46,55 @@ class _GroupScreenState extends State<GroupScreen>
   }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text(
-            'Quản lý nhóm',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
+    return BlocProvider(
+      create: (context) => GroupBloc(
+        groupRepository: GroupRepository(
+          apiService: ApiService(),
+        ),
+      ),
+      child: DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: const Text(
+              'Quản lý nhóm',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+              ),
+            ),
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textLight,
+            elevation: 0,
+            centerTitle: true,
+            bottom: TabBar(
+              indicatorColor: AppColors.textLight,
+              indicatorWeight: 3,
+              labelColor: AppColors.textLight,
+              unselectedLabelColor: AppColors.textLight.withOpacity(0.7),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+              ),
+              tabs: const [
+                Tab(
+                  text: 'Nhóm của tôi',
+                  icon: Icon(Icons.groups, size: 20),
+                ),
+                Tab(
+                  text: 'Lời mời',
+                  icon: Icon(Icons.mail_outline, size: 20),
+                ),
+                Tab(
+                  text: 'Mời thành viên',
+                  icon: Icon(Icons.person_add_alt, size: 20),
+                ),
+              ],
             ),
           ),
           backgroundColor: AppColors.primary,

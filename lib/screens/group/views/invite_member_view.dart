@@ -273,7 +273,7 @@ class _InviteMemberViewState extends State<InviteMemberView> {
         },
       ),
     );
-  }void _sendInvite(String studentId) {
+  }  void _sendInvite(String studentId) {
     setState(() {
       _isInviting = true;
     });

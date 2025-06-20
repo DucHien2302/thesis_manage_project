@@ -18,6 +18,8 @@ class _MyGroupsViewState extends State<MyGroupsView>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+
   @override
   void initState() {
     super.initState();
@@ -82,19 +84,9 @@ class _MyGroupsViewState extends State<MyGroupsView>
             return RefreshIndicator(
               onRefresh: () async {
                 context.read<GroupBloc>().add(GetMyGroupsEvent());
-                // Wait for the refresh to complete
-                await Future.delayed(const Duration(milliseconds: 500));
               },
               child: _buildGroupsList(state.groups),
             );
-          } else if (state is GroupInitialState) {
-            // Only call API for initial state, not for other states
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                context.read<GroupBloc>().add(GetMyGroupsEvent());
-              }
-            });
-            return const LoadingIndicator(message: 'Khởi tạo...');
           } else {
             // For error states or other states, show appropriate message
             return const Center(
