@@ -326,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else {
         _logger.debug('Profile save successful');
         _showSuccessSnackBar('Cập nhật thông tin thành công');
-        
+
         // Add a small delay before reloading to avoid API conflicts
         await Future.delayed(const Duration(milliseconds: 1000));
         
