@@ -29,16 +29,15 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     if (authState is Authenticated) {
       currentUserId = authState.user['id']?.toString();
     }
-    
-    // Load group members when the screen initializes
-    context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+      // Load group members when the screen initializes
+    context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id.toString()));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.group.name),
+        title: Text(widget.group.name ?? 'Nhóm'),
         actions: [
           if (isLeader)
             PopupMenuButton<String>(
@@ -119,7 +118,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     );
   }
 
-  Widget _buildGroupDetails(List<GroupMemberModel> members) {
+  Widget _buildGroupDetails(List<MemberDetailModel> members) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -137,7 +136,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const Divider(height: 24),
-                  _infoRow('Tên nhóm:', widget.group.name),
+                  _infoRow('Tên nhóm:', widget.group.name ?? 'Chưa có tên'),
                   const SizedBox(height: 8),
                   _infoRow('ID nhóm:', widget.group.id),
                   const SizedBox(height: 8),
@@ -199,7 +198,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     );
   }
 
-  Widget _buildMembersList(List<GroupMemberModel> members) {
+  Widget _buildMembersList(List<MemberDetailModel> members) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -323,7 +322,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     );
   }
 
-  void _showTransferLeaderConfirmation(BuildContext context, GroupMemberModel member) {
+  void _showTransferLeaderConfirmation(BuildContext context, MemberDetailModel member) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -358,7 +357,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     );
   }
 
-  void _showRemoveMemberConfirmation(BuildContext context, GroupMemberModel member) {
+  void _showRemoveMemberConfirmation(BuildContext context, MemberDetailModel member) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {

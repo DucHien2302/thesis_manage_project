@@ -137,9 +137,9 @@ class _AdminLecturerManagementState extends State<AdminLecturerManagement> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Đăng ký tài khoản giảng viên thành công!'),
-              backgroundColor: Colors.green,
+              backgroundColor: ColorScheme.of(context).primary,
             ),
           );
           

@@ -113,16 +113,15 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return Scaffold(      appBar: AppBar(
         title: Text(_currentPageTitle),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 4,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+              colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -176,9 +175,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ),
                 );
               },
-              icon: const Icon(Icons.add),
-              label: const Text('Tạo mới'),
-              backgroundColor: AppColors.success,
+              icon: const Icon(Icons.add),              label: const Text('Tạo mới'),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             )
           : null,
@@ -190,10 +188,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, profileState) {
               return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(16),                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.success, AppColors.success.withOpacity(0.8)],
+                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -203,11 +200,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     children: [
                       CircleAvatar(
                         radius: 25,
-                        backgroundColor: Colors.white,
-                        child: Icon(
+                        backgroundColor: Colors.white,                        child: Icon(
                           Icons.school,
                           size: 28,
-                          color: AppColors.success,
+                          color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -286,25 +282,22 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 final isSelected = index == _currentIndex;
                 
                 return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
-                  decoration: BoxDecoration(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: isSelected ? AppColors.success.withOpacity(0.1) : null,
+                    color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
                   ),
                   child: ListTile(
                     dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    leading: Icon(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),                    leading: Icon(
                       isSelected ? item['activeIcon'] : item['icon'],
                       size: 22,
-                      color: isSelected ? AppColors.success : Colors.grey[600],
+                      color: isSelected ? AppColors.primary : Colors.grey[600],
                     ),
                     title: Text(
-                      item['title'],
-                      style: TextStyle(
+                      item['title'],                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? AppColors.success : Colors.grey[800],
+                        color: isSelected ? AppColors.primary : Colors.grey[800],
                       ),
                     ),                    onTap: () {
                       setState(() {
@@ -414,12 +407,11 @@ class _OverviewTabState extends State<_OverviewTab> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome section
+          children: [            // Welcome section
             GradientCard(
               gradientColors: [
-                AppColors.success.withOpacity(0.8),
-                AppColors.success,
+                AppColors.primary.withOpacity(0.8),
+                AppColors.primary,
               ],
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -569,13 +561,12 @@ class _OverviewTabState extends State<_OverviewTab> {
                 Expanded(
                   child: QuickActionButton(
                     icon: Icons.add_task,
-                    label: 'Tạo nhiệm vụ',
-                    onPressed: () {
+                    label: 'Tạo nhiệm vụ',                    onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Tính năng đang phát triển')),
                       );
                     },
-                    color: AppColors.success,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -623,10 +614,9 @@ class _OverviewTabState extends State<_OverviewTab> {
             ModernCard(
               child: Column(
                 children: [
-                  ProgressIndicatorWidget(
-                    progress: 0.65,
-                    label: 'Tổng tiến độ',
-                    color: AppColors.success,
+                  ProgressIndicatorWidget(                  progress: 0.65,
+                  label: 'Tổng tiến độ',
+                  color: AppColors.primary,
                   ),
                   const SizedBox(height: 16),
                   ProgressIndicatorWidget(
@@ -666,19 +656,17 @@ class _OverviewTabState extends State<_OverviewTab> {
             ModernCard(
               child: Column(
                 children: [
-                  _buildNotificationItem(
-                    'Có nhiệm vụ mới được giao',
-                    '2 giờ trước',
-                    AppColors.info,
+                  _buildNotificationItem(                  'Có nhiệm vụ mới được giao',
+                  '2 giờ trước',
+                  AppColors.primary,
                   ),
                   _buildNotificationItem(
                     'Hạn nộp báo cáo tiến độ',
                     '1 ngày',
                     AppColors.warning,
-                  ),
-                  _buildNotificationItem(
+                  ),                  _buildNotificationItem(
                     'Cuộc họp nhóm lúc 14:00',                    'Hôm nay',
-                    AppColors.success,
+                    AppColors.primary,
                   ),
                 ],
               ),
@@ -763,11 +751,10 @@ class _OverviewTabState extends State<_OverviewTab> {
           value: getDisplayValue(studentInfo.studentCode),
           iconColor: AppColors.primary,
         ),
-        InfoCard(
-          icon: Icons.person_outline,
+        InfoCard(          icon: Icons.person_outline,
           title: 'Họ tên',
           value: formatFullName(information.firstName, information.lastName),
-          iconColor: AppColors.success,
+          iconColor: AppColors.primary,
         ),
         InfoCard(
           icon: Icons.school,
@@ -811,11 +798,10 @@ class _OverviewTabState extends State<_OverviewTab> {
           value: 'Đang cập nhật...',
           iconColor: AppColors.primary,
         ),
-        InfoCard(
-          icon: Icons.person_outline,
+        InfoCard(          icon: Icons.person_outline,
           title: 'Họ tên',
           value: 'Đang cập nhật...',
-          iconColor: AppColors.success,
+          iconColor: AppColors.primary,
         ),
         InfoCard(
           icon: Icons.school,
@@ -879,8 +865,26 @@ class _GroupTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Chức năng quản lý nhóm sẽ được phát triển tại đây.',
+                  'Tạo nhóm, mời thành viên và quản lý các hoạt động nhóm.',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/groups');
+                    },
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('Vào trang quản lý nhóm'),                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -978,11 +982,10 @@ class _TaskTab extends StatelessWidget {
           
           ModernCard(
             child: Column(
-              children: [
-                _buildTaskItem(
+              children: [                _buildTaskItem(
                   'Hoàn thành Chapter 1',
                   'Hôm nay',
-                  AppColors.success,
+                  AppColors.primary,
                   0.8,
                 ),
                 const Divider(),
@@ -1112,11 +1115,10 @@ class _ProgressTab extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GradientCard(
+        children: [          GradientCard(
             gradientColors: [
-              AppColors.success.withOpacity(0.8),
-              AppColors.success,
+              AppColors.primary.withOpacity(0.8),
+              AppColors.primary,
             ],
             child: Row(
               children: [
@@ -1139,11 +1141,10 @@ class _ProgressTab extends StatelessWidget {
           
           // Tổng quan tiến độ
           StatCard(
-            icon: Icons.timeline,
-            title: 'Tiến độ tổng thể',
+            icon: Icons.timeline,            title: 'Tiến độ tổng thể',
             value: '65%',
             subtitle: 'Đang đạt mục tiêu',
-            color: AppColors.success,
+            color: AppColors.primary,
           ),
           
           const SizedBox(height: 20),
@@ -1160,11 +1161,10 @@ class _ProgressTab extends StatelessWidget {
           
           ModernCard(
             child: Column(
-              children: [
-                _buildProgressPhase(
+              children: [                _buildProgressPhase(
                   'Nghiên cứu & Phân tích',
                   0.9,
-                  AppColors.success,
+                  AppColors.primary,
                   'Hoàn thành',
                 ),
                 const SizedBox(height: 16),
@@ -1214,12 +1214,11 @@ class _ProgressTab extends StatelessWidget {
           
           ModernCard(
             child: Column(
-              children: [
-                _buildMilestone(
+              children: [                _buildMilestone(
                   'Báo cáo tiến độ tháng 1',
                   '15/01/2025',
                   true,
-                  AppColors.success,
+                  AppColors.primary,
                 ),
                 const Divider(),
                 _buildMilestone(

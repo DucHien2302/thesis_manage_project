@@ -4,6 +4,7 @@ import 'package:thesis_manage_project/repositories/group_repository.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/group/views/invitations_view.dart';
 import 'package:thesis_manage_project/screens/group/views/my_groups_view.dart';
+import 'package:thesis_manage_project/screens/group/views/student_list_view.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 
 class GroupScreen extends StatelessWidget {
@@ -18,13 +19,15 @@ class GroupScreen extends StatelessWidget {
         ),
       ),
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Quản lý nhóm'),            bottom: const TabBar(
+            title: const Text('Quản lý nhóm'),
+            bottom: const TabBar(
               tabs: [
                 Tab(text: 'Nhóm của tôi', icon: Icon(Icons.group)),
                 Tab(text: 'Lời mời', icon: Icon(Icons.mail)),
+                Tab(text: 'Mời sinh viên', icon: Icon(Icons.person_add)),
               ],
             ),
           ),
@@ -32,6 +35,7 @@ class GroupScreen extends StatelessWidget {
             children: [
               MyGroupsView(),
               InvitationsView(),
+              StudentListView(),
             ],
           ),
         ),

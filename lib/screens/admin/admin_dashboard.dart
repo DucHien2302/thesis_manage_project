@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
-import 'package:thesis_manage_project/screens/admin/admin_lecturer_management.dart';
+import 'package:thesis_manage_project/screens/admin/admin_user_management.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 
 /// Admin Dashboard - Giao diện dành cho Quản trị viên
@@ -471,40 +471,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
-
   // Tab 2: Quản lý người dùng
   Widget _buildUserManagementTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Quản lý người dùng',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              ElevatedButton.icon(
-                onPressed: _showAddUserDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Thêm người dùng'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Danh sách người dùng (Demo)',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
+    return const AdminUserManagement();
   }
 
   // Tab 3: Quản lý danh mục
@@ -626,52 +595,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             color: color,
           ),
         ],
-      ),
-    );
-  }
-
-  // Helper methods for admin actions
-  void _showAddUserDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Chọn loại người dùng'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.school, color: AppColors.accent),
-                title: const Text('Giảng viên'),
-                subtitle: const Text('Tạo tài khoản cho giảng viên mới'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(
-                      builder: (context) => const AdminLecturerManagement(),
-                    ),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.person, color: AppColors.info),
-                title: const Text('Sinh viên'),
-                subtitle: const Text('Sinh viên tự đăng ký tài khoản'),
-                enabled: false,
-                onTap: () {},
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Đóng'),
-            ),
-          ],
-        );
-      },
-    );
+      ),    );
   }
 }

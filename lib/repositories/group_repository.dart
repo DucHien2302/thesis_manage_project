@@ -36,11 +36,10 @@ class GroupRepository {
     await _apiService.delete('/group/$groupId/remove-member/$memberId');
   }
 
-  /// Get all members of a group
-  Future<List<GroupMemberModel>> getGroupMembers(String groupId) async {
+  /// Get group details with members
+  Future<GroupModel> getGroupDetails(String groupId) async {
     final response = await _apiService.get('/group/$groupId/members');
-    final List<dynamic> data = response;
-    return data.map((member) => GroupMemberModel.fromJson(member)).toList();
+    return GroupModel.fromJson(response);
   }
 
   /// Transfer group leadership to another member
@@ -49,13 +48,10 @@ class GroupRepository {
   }
 
   /// Send an invitation to join a group
-  Future<void> sendInvite(String receiverId, String? groupId) async {
+  Future<void> sendInvite(String receiverId) async {
     await _apiService.post(
       '/invite/send',
-      body: {
-        'receiver_id': receiverId,
-        'group_id': groupId,
-      },
+      body: InviteCreateRequest(receiverId: receiverId).toJson(),
     );
   }
 
@@ -77,21 +73,20 @@ class GroupRepository {
   /// Update group name
   Future<GroupModel> updateGroupName(String groupId, String newName) async {
     final response = await _apiService.put(
-      '/group/$groupId',
-      body: {'name': newName},
+      '/group/$groupId/name',
+      body: {'new_name': newName},
     );
     return GroupModel.fromJson(response);
   }
 
-  /// Leave group
-  Future<void> leaveGroup(String groupId) async {
-    await _apiService.delete('/group/$groupId/leave');
+  /// Delete group
+  Future<void> deleteGroup(String groupId) async {
+    await _apiService.delete('/group/$groupId');
   }
 
-  /// Get all invitations for the current user
-  Future<List<InviteModel>> getMyInvites() async {
-    final response = await _apiService.get('/invite/my-invites');
-    final List<dynamic> data = response;
-    return data.map((invite) => InviteModel.fromJson(invite)).toList();
+  /// Get all invitations for the current user (both sent and received)
+  Future<AllInvitesResponse> getAllMyInvites() async {
+    final response = await _apiService.get('/invite/all-my-invites');
+    return AllInvitesResponse.fromJson(response);
   }
 }

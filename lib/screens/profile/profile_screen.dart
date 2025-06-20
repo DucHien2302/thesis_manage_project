@@ -325,8 +325,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _showErrorSnackBar('Lỗi khi lưu thông tin: $errorMessage');
       } else {
         _logger.debug('Profile save successful');
-        _showSuccessSnackBar('Thông tin đã được lưu thành công');
-        
+        _showSuccessSnackBar('Cập nhật thông tin thành công');
+
         // Add a small delay before reloading to avoid API conflicts
         await Future.delayed(const Duration(milliseconds: 1000));
         
@@ -356,18 +356,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
   }
-
   // Show error message
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message), 
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(
+          bottom: 20,
+          left: 20,
+          right: 20,
+        ),
+        duration: const Duration(seconds: 3),
+      ),
     );
-  }
-
-  // Show success message
+  }  // Show success message
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+      SnackBar(
+        content: Text(message), 
+        backgroundColor: ColorScheme.of(context).primary,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(
+          bottom: 20,
+          left: 20,
+          right: 20,
+        ),
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 

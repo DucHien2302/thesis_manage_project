@@ -64,22 +64,52 @@ class _InviteMemberViewState extends State<InviteMemberView> {
         // Show some dummy data if API fails
         _students = [
           StudentModel(
-            id: '1', 
-            fullName: 'Nguyễn Văn A', 
-            studentCode: '20110001',
-            major: 'Công nghệ thông tin'
+            id: '1',
+            userName: 'nguyenvana',
+            information: InformationModel(
+              id: '1',
+              userId: '1',
+              firstName: 'Nguyễn Văn',
+              lastName: 'A',
+              dateOfBirth: '2000-01-01',
+              gender: 1,
+              address: 'TP.HCM',
+              telPhone: '0123456789',
+            ),
+            studentInfo: StudentInfoModel(
+              id: '1',
+              userId: '1',
+              studentCode: '20110001',
+              className: 'KHMT2021',
+              majorId: '1',
+              majorName: 'Công nghệ thông tin',
+              createDatetime: '2021-01-01',
+              updateDatetime: '2021-01-01',
+            ),
           ),
           StudentModel(
-            id: '2', 
-            fullName: 'Trần Thị B', 
-            studentCode: '20110002',
-            major: 'Công nghệ thông tin'
-          ),
-          StudentModel(
-            id: '3', 
-            fullName: 'Lê Văn C', 
-            studentCode: '20110003',
-            major: 'Công nghệ thông tin'
+            id: '2',
+            userName: 'tranthib',
+            information: InformationModel(
+              id: '2',
+              userId: '2',
+              firstName: 'Trần Thị',
+              lastName: 'B',
+              dateOfBirth: '2000-02-01',
+              gender: 0,
+              address: 'TP.HCM',
+              telPhone: '0123456788',
+            ),
+            studentInfo: StudentInfoModel(
+              id: '2',
+              userId: '2',
+              studentCode: '20110002',
+              className: 'KHMT2021',
+              majorId: '1',
+              majorName: 'Công nghệ thông tin',
+              createDatetime: '2021-01-01',
+              updateDatetime: '2021-01-01',
+            ),
           ),
         ];
         _filteredStudents = _students;
@@ -203,7 +233,7 @@ class _InviteMemberViewState extends State<InviteMemberView> {
                 children: [
                   const SizedBox(height: 8),
                   Text('MSSV: ${student.studentCode}'),
-                  Text('Ngành: ${student.major ?? "Chưa cập nhật"}'),
+                  Text('Ngành: ${student.majorName}'),
                 ],
               ),
               trailing: CustomButton(
