@@ -18,11 +18,13 @@ class GroupDetailView extends StatefulWidget {
 
 class _GroupDetailViewState extends State<GroupDetailView> {
   late String? currentUserId;
+  late GroupModel currentGroup;
+  bool _isTransferringLeadership = false;
 
-  bool get isLeader => currentUserId != null && widget.group.leaderId == currentUserId;
-  @override
+  bool get isLeader => currentUserId != null && currentGroup.leaderId == currentUserId;@override
   void initState() {
     super.initState();
+    currentGroup = widget.group;
     // Get current user ID
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
@@ -31,16 +33,20 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     // Load group members when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
       }
     });
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.group.name ?? 'Nhóm'),
+    return WillPopScope(
+      onWillPop: () async {
+        // Call GetMyGroupsEvent when user navigates back
+        context.read<GroupBloc>().add(GetMyGroupsEvent());
+        return true; // Allow the pop to proceed
+      },
+      child: Scaffold(appBar: AppBar(
+        title: Text(currentGroup.name ?? 'Nhóm'),
         actions: [
           if (isLeader)
             PopupMenuButton<String>(
@@ -68,23 +74,39 @@ class _GroupDetailViewState extends State<GroupDetailView> {
           if (state is GroupErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error)),
-            );
-          } else if (state is MemberRemovedState) {
-            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+            );          } else if (state is MemberRemovedState) {
+            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã xóa thành viên khỏi nhóm')),
-            );
-          } else if (state is LeadershipTransferredState) {
-            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+            );          } else if (state is LeadershipTransferredState) {
+            _isTransferringLeadership = true;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã chuyển quyền nhóm trưởng')),
             );
-            Navigator.pop(context);
-          } else if (state is GroupNameUpdatedState) {
+            // Update groups list and then navigate back
+            context.read<GroupBloc>().add(GetMyGroupsEvent());
+            // Also reload members for current view
+            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+          } else if (state is MyGroupsLoadedState && _isTransferringLeadership) {
+            // Only navigate back after groups are updated following leadership transfer
+            _isTransferringLeadership = false;
+            if (mounted) {
+              Navigator.pop(context);
+            }} else if (state is GroupNameUpdatedState) {
+            // Update current group with new data
+            setState(() {
+              currentGroup = state.updatedGroup;
+            });
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã cập nhật tên nhóm')),
             );
-            context.read<GroupBloc>().add(GetMyGroupsEvent());
+            // Reload group members to refresh the display
+            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+          } else if (state is GroupDetailLoadedState) {
+            // Update current group with detailed information
+            setState(() {
+              currentGroup = state.group;
+            });
           } else if (state is GroupDissolvedState) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Nhóm đã được giải tán thành công')),
@@ -104,10 +126,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                     const Icon(Icons.error_outline, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
                     const Text('Có lỗi xảy ra'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
+                    const SizedBox(height: 16),                    ElevatedButton(
                       onPressed: () {
-                        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: widget.group.id));
+                        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
                       },
                       child: const Text('Thử lại'),
                     ),
@@ -120,17 +141,16 @@ class _GroupDetailViewState extends State<GroupDetailView> {
           },
         ),
       ),
-      floatingActionButton: isLeader ? FloatingActionButton(
-        onPressed: () {
+      floatingActionButton: isLeader ? FloatingActionButton(        onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => InviteMemberView(groupId: widget.group.id),
+              builder: (context) => InviteMemberView(groupId: currentGroup.id),
             ),
           );
-        },
-        child: const Icon(Icons.person_add),
+        },        child: const Icon(Icons.person_add),
       ) : null,
+      ),
     );
   }
 
@@ -151,10 +171,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                     'Thông tin nhóm',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  const Divider(height: 24),
-                  _infoRow('Tên nhóm:', widget.group.name ?? 'Chưa có tên'),
+                  const Divider(height: 24),                  _infoRow('Tên nhóm:', currentGroup.name ?? 'Chưa có tên'),
                   const SizedBox(height: 8),
-                  _infoRow('ID nhóm:', widget.group.id),
+                  _infoRow('ID nhóm:', currentGroup.id),
                   const SizedBox(height: 8),
                   _infoRow('Số thành viên:', members.length.toString()),
                 ],
@@ -167,19 +186,13 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 16),
-          _buildMembersList(members),          const SizedBox(height: 24),
+          _buildMembersList(members),          
+          const SizedBox(height: 24),
           if (isLeader) ...[
             CustomButton(
-              text: 'Mời thêm thành viên',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InviteMemberView(groupId: widget.group.id),
-                  ),
-                );
-              },
-              backgroundColor: Theme.of(context).primaryColor,
+              text: 'Đổi tên nhóm',
+              onPressed: () => _showEditGroupDialog(context),
+              backgroundColor: Colors.blueAccent,
               textColor: Colors.white,
             ),
             const SizedBox(height: 16),
@@ -294,9 +307,8 @@ class _GroupDetailViewState extends State<GroupDetailView> {
       },
     );
   }
-
   void _showEditGroupDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController(text: widget.group.name);
+    final TextEditingController nameController = TextEditingController(text: currentGroup.name);
 
     showDialog(
       context: context,
@@ -320,11 +332,10 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             ),
             TextButton(
               child: const Text('Lưu'),
-              onPressed: () {
-                if (nameController.text.trim().isNotEmpty) {
+              onPressed: () {                if (nameController.text.trim().isNotEmpty) {
                   context.read<GroupBloc>().add(
                     UpdateGroupNameEvent(
-                      groupId: widget.group.id,
+                      groupId: currentGroup.id,
                       newName: nameController.text.trim(),
                     ),
                   );
@@ -356,11 +367,10 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               },
             ),
             TextButton(
-              child: const Text('Chuyển quyền'),
-              onPressed: () {
+              child: const Text('Chuyển quyền'),              onPressed: () {
                 context.read<GroupBloc>().add(
                   TransferGroupLeadershipEvent(
-                    groupId: widget.group.id, 
+                    groupId: currentGroup.id, 
                     newLeaderId: member.userId,
                   ),
                 );
@@ -390,11 +400,10 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               },
             ),
             TextButton(
-              child: const Text('Xóa', style: TextStyle(color: Colors.red)),
-              onPressed: () {
+              child: const Text('Xóa', style: TextStyle(color: Colors.red)),              onPressed: () {
                 context.read<GroupBloc>().add(
                   RemoveGroupMemberEvent(
-                    groupId: widget.group.id, 
+                    groupId: currentGroup.id, 
                     memberId: member.userId,
                   ),
                 );
@@ -425,9 +434,8 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               },
             ),
             TextButton(
-              child: const Text('Giải tán nhóm', style: TextStyle(color: Colors.red)),
-              onPressed: () {                context.read<GroupBloc>().add(
-                  DissolveGroupEvent(groupId: widget.group.id),
+              child: const Text('Giải tán nhóm', style: TextStyle(color: Colors.red)),              onPressed: () {                context.read<GroupBloc>().add(
+                  DissolveGroupEvent(groupId: currentGroup.id),
                 );
                 Navigator.of(dialogContext).pop();
               },
