@@ -139,19 +139,29 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               return const LoadingIndicator(message: 'Đang tải dữ liệu nhóm...');
             }
           },
-        ),
-      ),
-      floatingActionButton: isLeader ? FloatingActionButton(        onPressed: () {
+        ),      ),
+      floatingActionButton: (isLeader && _getCurrentMemberCount() < 3) ? FloatingActionButton(
+        onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => InviteMemberView(groupId: currentGroup.id),
             ),
           );
-        },        child: const Icon(Icons.person_add),
+        },
+        child: const Icon(Icons.person_add),
       ) : null,
       ),
     );
+  }
+
+  int _getCurrentMemberCount() {
+    // Get current member count from the latest state
+    final state = context.read<GroupBloc>().state;
+    if (state is GroupMembersLoadedState) {
+      return state.members.length;
+    }
+    return 0;
   }
 
   Widget _buildGroupDetails(List<MemberDetailModel> members) {
@@ -175,7 +185,34 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                   const SizedBox(height: 8),
                   _infoRow('ID nhóm:', currentGroup.id),
                   const SizedBox(height: 8),
-                  _infoRow('Số thành viên:', members.length.toString()),
+                  _infoRow('Số thành viên:', '${members.length}/3'),
+                  if (members.length >= 3) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, 
+                               color: Colors.orange.shade800, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Nhóm đã đạt tối đa 3 thành viên',
+                              style: TextStyle(
+                                color: Colors.orange.shade800,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -186,9 +223,24 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 16),
-          _buildMembersList(members),          
-          const SizedBox(height: 24),
+          _buildMembersList(members),            const SizedBox(height: 24),
           if (isLeader) ...[
+            if (members.length < 3) ...[
+              CustomButton(
+                text: 'Mời thành viên',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InviteMemberView(groupId: currentGroup.id),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.green,
+                textColor: Colors.white,
+              ),
+              const SizedBox(height: 16),
+            ],
             CustomButton(
               text: 'Đổi tên nhóm',
               onPressed: () => _showEditGroupDialog(context),
