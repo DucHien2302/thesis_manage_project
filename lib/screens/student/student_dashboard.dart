@@ -5,6 +5,8 @@ import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/profile_screen.dart';
 import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
+import 'package:thesis_manage_project/repositories/group_repository.dart';
+import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/widgets/modern_card.dart';
 import 'package:thesis_manage_project/widgets/ui_components.dart';
@@ -365,18 +367,21 @@ class _OverviewTab extends StatefulWidget {
 
 class _OverviewTabState extends State<_OverviewTab> {
   late ProfileBloc _profileBloc;
-  
-  @override
+  late GroupRepository _groupRepository;
+  GroupModel? _currentGroup;
+  bool _isLoadingGroup = false;
+    @override
   void initState() {
     super.initState();
     _profileBloc = ProfileBloc(
       profileRepository: ProfileRepository(apiService: ApiService())
     );
+    _groupRepository = GroupRepository(apiService: ApiService());
     
-    // Load profile data
+    // Load profile data and group data
     _loadProfile();
+    _loadGroupInfo();
   }
-
   void _loadProfile() {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
@@ -385,6 +390,75 @@ class _OverviewTabState extends State<_OverviewTab> {
         userType: AppConfig.userTypeStudent,
         userId: userId,
       ));
+    }
+  }
+
+  void _loadGroupInfo() async {
+    setState(() {
+      _isLoadingGroup = true;
+    });
+    
+    try {
+      final currentGroup = await _groupRepository.getCurrentUserGroup();
+      if (mounted) {
+        setState(() {
+          _currentGroup = currentGroup;
+          _isLoadingGroup = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentGroup = null;
+          _isLoadingGroup = false;
+        });
+      }
+    }  }
+
+  // Helper methods để hiển thị thông tin nhóm
+  String _getGroupDisplayValue() {
+    if (_isLoadingGroup) {
+      return 'Đang tải...';
+    }
+    
+    if (_currentGroup == null) {
+      return 'Chưa có nhóm';
+    }
+    
+    // Nếu nhóm có tên thì hiển thị tên, nếu không thì tạo tên mặc định
+    if (_currentGroup!.name != null && _currentGroup!.name!.isNotEmpty) {
+      return _currentGroup!.name!;
+    } else {
+      // Tạo tên nhóm mặc định dựa trên số thành viên và ID
+      final memberCount = _currentGroup!.members.length;
+      if (memberCount <= 1) {
+        return 'Nhóm cá nhân';
+      } else {
+        // Tạo tên dựa trên ID nhóm (lấy 2 ký tự cuối)
+        final shortId = _currentGroup!.id.length >= 2 
+            ? _currentGroup!.id.substring(_currentGroup!.id.length - 2)
+            : _currentGroup!.id;
+        return 'Nhóm ${shortId.toUpperCase()}';
+      }
+    }
+  }
+  
+  String _getGroupSubtitle() {
+    if (_isLoadingGroup) {
+      return 'Đang tải...';
+    }
+    
+    if (_currentGroup == null) {
+      return 'Tạo nhóm mới';
+    }
+    
+    final memberCount = _currentGroup!.members.length;
+    if (memberCount == 0) {
+      return 'Chưa có thành viên';
+    } else if (memberCount == 1) {
+      return '1 thành viên';
+    } else {
+      return '$memberCount thành viên';
     }
   }
 
@@ -397,9 +471,9 @@ class _OverviewTabState extends State<_OverviewTab> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _profileBloc,
-      child: RefreshIndicator(
-        onRefresh: () async {
+      child: RefreshIndicator(        onRefresh: () async {
           _loadProfile();
+          _loadGroupInfo();
           await Future.delayed(const Duration(milliseconds: 500));
         },
         child: SingleChildScrollView(
@@ -486,12 +560,11 @@ class _OverviewTabState extends State<_OverviewTab> {
                   value: '3',
                   subtitle: 'Còn lại',
                   color: AppColors.error,
-                ),
-                StatCard(
+                ),                StatCard(
                   icon: Icons.group,
                   title: 'Nhóm',
-                  value: 'Nhóm 05',
-                  subtitle: '4 thành viên',
+                  value: _getGroupDisplayValue(),
+                  subtitle: _getGroupSubtitle(),
                   color: AppColors.primary,
                 ),
               ],
