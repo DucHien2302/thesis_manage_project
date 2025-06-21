@@ -926,15 +926,14 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
       ),
     );
   }
-
   Widget _buildModernTaskItem(String title, String deadline, bool isCompleted, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isCompleted ? Colors.green.withOpacity(0.1) : color.withOpacity(0.1),
+        color: isCompleted ? AppColors.primary.withOpacity(0.1) : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isCompleted ? Colors.green.withOpacity(0.2) : color.withOpacity(0.2),
+          color: isCompleted ? AppColors.primary.withOpacity(0.2) : color.withOpacity(0.2),
         ),
       ),
       child: Row(
@@ -942,7 +941,7 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isCompleted ? Colors.green : color,
+              color: isCompleted ? AppColors.primary : color,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Icon(

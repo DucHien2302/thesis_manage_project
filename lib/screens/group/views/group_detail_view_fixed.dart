@@ -18,8 +18,16 @@ class GroupDetailView extends StatefulWidget {
 }
 
 class _GroupDetailViewState extends State<GroupDetailView> {
+  late String? currentUserId;
   late GroupModel currentGroup;
   bool _isTransferringLeadership = false;
+
+  bool _isLeader(String? currentUserId) => currentUserId != null && currentGroup.leaderId == currentUserId;
+  
+  bool _isCurrentUserMember(List<MemberDetailModel> members, String? currentUserId) {
+    if (currentUserId == null) return false;
+    return members.any((member) => member.userId == currentUserId);
+  }
 
   @override
   void initState() {
@@ -33,21 +41,6 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     });
   }
 
-  bool _isLeader(String? currentUserId) => currentUserId != null && currentGroup.leaderId == currentUserId;
-
-  bool _isCurrentUserMember(List<MemberDetailModel> members, String? currentUserId) {
-    if (currentUserId == null) return false;
-    return members.any((member) => member.userId == currentUserId);
-  }
-
-  int _getCurrentMemberCount() {
-    final state = context.read<GroupBloc>().state;
-    if (state is GroupMembersLoadedState) {
-      return state.members.length;
-    }
-    return 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
@@ -56,11 +49,12 @@ class _GroupDetailViewState extends State<GroupDetailView> {
         if (authState is Authenticated) {
           currentUserId = authState.user['id']?.toString();
         }
-
+        
         return WillPopScope(
           onWillPop: () async {
+            // Call GetMyGroupsEvent when user navigates back
             context.read<GroupBloc>().add(GetMyGroupsEvent());
-            return true;
+            return true; // Allow the pop to proceed
           },
           child: Scaffold(
             appBar: AppBar(
@@ -104,20 +98,25 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Đã chuyển quyền nhóm trưởng')),
                   );
+                  // Update groups list and then navigate back
                   context.read<GroupBloc>().add(GetMyGroupsEvent());
+                  // Also reload members for current view
                   context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
                 } else if (state is MyGroupsLoadedState && _isTransferringLeadership) {
+                  // Only navigate back after groups are updated following leadership transfer
                   _isTransferringLeadership = false;
                   if (mounted) {
                     Navigator.pop(context);
                   }
                 } else if (state is GroupNameUpdatedState) {
+                  // Update current group with new data
                   setState(() {
                     currentGroup = state.updatedGroup;
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Đã cập nhật tên nhóm')),
                   );
+                  // Reload group members to refresh the display
                   context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
                 } else if (state is GroupDissolvedState) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -129,6 +128,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               child: BlocBuilder<GroupBloc, GroupState>(
                 builder: (context, state) {
                   if (state is GroupMembersLoadedState) {
+                    // Check if current user is still a member of the group
                     if (!_isCurrentUserMember(state.members, currentUserId)) {
                       return _buildNotMemberView();
                     }
@@ -157,7 +157,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                 },
               ),
             ),
-            floatingActionButton: (_isLeader(currentUserId) && _getCurrentMemberCount() < 3)
+            floatingActionButton: (_isLeader(currentUserId) && _getCurrentMemberCount() < 3 && _isCurrentUserStillMember(currentUserId)) 
                 ? FloatingActionButton(
                     onPressed: () {
                       Navigator.push(
@@ -168,12 +168,30 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                       );
                     },
                     child: const Icon(Icons.person_add),
-                  )
+                  ) 
                 : null,
           ),
         );
       },
     );
+  }
+
+  int _getCurrentMemberCount() {
+    // Get current member count from the latest state
+    final state = context.read<GroupBloc>().state;
+    if (state is GroupMembersLoadedState) {
+      return state.members.length;
+    }
+    return 0;
+  }
+
+  bool _isCurrentUserStillMember(String? currentUserId) {
+    // Check if current user is still a member based on latest state
+    final state = context.read<GroupBloc>().state;
+    if (state is GroupMembersLoadedState) {
+      return _isCurrentUserMember(state.members, currentUserId);
+    }
+    return false;
   }
 
   Widget _buildNotMemberView() {
@@ -209,6 +227,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
+                // Navigate back and refresh groups list
                 context.read<GroupBloc>().add(GetMyGroupsEvent());
                 Navigator.pop(context);
               },
@@ -257,7 +276,8 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: Colors.orange.shade800, size: 16),
+                          Icon(Icons.info_outline, 
+                               color: Colors.orange.shade800, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -448,11 +468,11 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               onPressed: () {
                 if (nameController.text.trim().isNotEmpty) {
                   context.read<GroupBloc>().add(
-                        UpdateGroupNameEvent(
-                          groupId: currentGroup.id,
-                          newName: nameController.text.trim(),
-                        ),
-                      );
+                    UpdateGroupNameEvent(
+                      groupId: currentGroup.id,
+                      newName: nameController.text.trim(),
+                    ),
+                  );
                   Navigator.of(dialogContext).pop();
                 }
               },
@@ -471,7 +491,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
           title: const Text('Chuyển quyền trưởng nhóm'),
           content: Text(
             'Bạn có chắc chắn muốn chuyển quyền trưởng nhóm cho ${member.fullName}? '
-            'Bạn sẽ trở thành thành viên thường sau khi chuyển quyền.',
+            'Bạn sẽ trở thành thành viên thường sau khi chuyển quyền.'
           ),
           actions: <Widget>[
             TextButton(
@@ -484,11 +504,11 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               child: const Text('Chuyển quyền'),
               onPressed: () {
                 context.read<GroupBloc>().add(
-                      TransferGroupLeadershipEvent(
-                        groupId: currentGroup.id,
-                        newLeaderId: member.userId,
-                      ),
-                    );
+                  TransferGroupLeadershipEvent(
+                    groupId: currentGroup.id, 
+                    newLeaderId: member.userId,
+                  ),
+                );
                 Navigator.of(dialogContext).pop();
               },
             ),
@@ -504,7 +524,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Xóa thành viên'),
-          content: Text('Bạn có chắc chắn muốn xóa ${member.fullName} khỏi nhóm?'),
+          content: Text(
+            'Bạn có chắc chắn muốn xóa ${member.fullName} khỏi nhóm?'
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('Hủy'),
@@ -516,11 +538,11 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               child: const Text('Xóa', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 context.read<GroupBloc>().add(
-                      RemoveGroupMemberEvent(
-                        groupId: currentGroup.id,
-                        memberId: member.userId,
-                      ),
-                    );
+                  RemoveGroupMemberEvent(
+                    groupId: currentGroup.id, 
+                    memberId: member.userId,
+                  ),
+                );
                 Navigator.of(dialogContext).pop();
               },
             ),
@@ -539,7 +561,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
           content: const Text(
             'Bạn có chắc chắn muốn giải tán nhóm này? '
             'Thao tác này sẽ xóa nhóm và loại bỏ tất cả thành viên khỏi nhóm. '
-            'Thao tác này không thể hoàn tác.',
+            'Thao tác này không thể hoàn tác.'
           ),
           actions: <Widget>[
             TextButton(
@@ -552,8 +574,8 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               child: const Text('Giải tán nhóm', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 context.read<GroupBloc>().add(
-                      DissolveGroupEvent(groupId: currentGroup.id),
-                    );
+                  DissolveGroupEvent(groupId: currentGroup.id),
+                );
                 Navigator.of(dialogContext).pop();
               },
             ),

@@ -91,10 +91,9 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(            const SnackBar(
               content: Text('Đăng ký tài khoản giảng viên thành công!'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.primary,
             ),
           );
             // Reset form
@@ -316,10 +315,9 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
                     );
                   },
                 ),
-                IconButton(
-                  icon: Icon(
+                IconButton(                  icon: Icon(
                     lecturer['is_active'] ? Icons.block : Icons.check_circle,
-                    color: lecturer['is_active'] ? Colors.red : Colors.green,
+                    color: lecturer['is_active'] ? Colors.red : AppColors.primary,
                   ),
                   onPressed: () {
                     // TODO: Add block/unblock functionality
