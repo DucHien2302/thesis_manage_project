@@ -19,8 +19,9 @@ class GroupDetailView extends StatefulWidget {
 class _GroupDetailViewState extends State<GroupDetailView> {
   late String? currentUserId;
   late GroupModel currentGroup;
+  bool _isTransferringLeadership = false;
 
-  bool get isLeader => currentUserId != null && currentGroup.leaderId == currentUserId;  @override
+  bool get isLeader => currentUserId != null && currentGroup.leaderId == currentUserId;@override
   void initState() {
     super.initState();
     currentGroup = widget.group;
@@ -36,10 +37,15 @@ class _GroupDetailViewState extends State<GroupDetailView> {
       }
     });
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async {
+        // Call GetMyGroupsEvent when user navigates back
+        context.read<GroupBloc>().add(GetMyGroupsEvent());
+        return true; // Allow the pop to proceed
+      },
+      child: Scaffold(appBar: AppBar(
         title: Text(currentGroup.name ?? 'Nhóm'),
         actions: [
           if (isLeader)
@@ -72,13 +78,21 @@ class _GroupDetailViewState extends State<GroupDetailView> {
             context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã xóa thành viên khỏi nhóm')),
-            );
-          } else if (state is LeadershipTransferredState) {
-            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+            );          } else if (state is LeadershipTransferredState) {
+            _isTransferringLeadership = true;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã chuyển quyền nhóm trưởng')),
             );
-            Navigator.pop(context);          } else if (state is GroupNameUpdatedState) {
+            // Update groups list and then navigate back
+            context.read<GroupBloc>().add(GetMyGroupsEvent());
+            // Also reload members for current view
+            context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+          } else if (state is MyGroupsLoadedState && _isTransferringLeadership) {
+            // Only navigate back after groups are updated following leadership transfer
+            _isTransferringLeadership = false;
+            if (mounted) {
+              Navigator.pop(context);
+            }} else if (state is GroupNameUpdatedState) {
             // Update current group with new data
             setState(() {
               currentGroup = state.updatedGroup;
@@ -134,9 +148,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               builder: (context) => InviteMemberView(groupId: currentGroup.id),
             ),
           );
-        },
-        child: const Icon(Icons.person_add),
+        },        child: const Icon(Icons.person_add),
       ) : null,
+      ),
     );
   }
 
