@@ -195,7 +195,6 @@ class _MyGroupsViewState extends State<MyGroupsView>
       ),
     );
   }
-
   Widget _buildGroupsList(List<GroupModel> groups) {
     // Get current user id from AuthBloc
     final authState = context.watch<AuthBloc>().state;
@@ -203,13 +202,22 @@ class _MyGroupsViewState extends State<MyGroupsView>
 
     if (authState is Authenticated) {
       currentUserId = authState.user['id']?.toString();
+    }    // Filter groups where current user is still a member
+    final filteredGroups = groups.where((group) {
+      if (currentUserId == null) return false;
+      return group.members.any((member) => member.userId == currentUserId);
+    }).toList();
+
+    // If after filtering, no groups remain, show empty message
+    if (filteredGroups.isEmpty) {
+      return _buildEmptyGroupMessage();
     }
 
     return ListView.builder(
-      itemCount: groups.length,
+      itemCount: filteredGroups.length,
       padding: const EdgeInsets.all(AppDimens.marginMedium),
       itemBuilder: (context, index) {
-        final group = groups[index];
+        final group = filteredGroups[index];
         final isLeader =
             currentUserId != null && group.leaderId == currentUserId;
 
