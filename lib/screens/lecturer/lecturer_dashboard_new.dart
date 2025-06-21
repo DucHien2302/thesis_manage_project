@@ -248,8 +248,9 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 1),                              Text(
-                                profileState.lecturerProfile!.lecturerInfo.departmentName ?? 'Chưa cập nhật khoa',
+                              const SizedBox(height: 1),
+                              Text(
+                                profileState.lecturerProfile!.lecturerInfo.facultyName ?? 'Chưa cập nhật khoa',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.white.withOpacity(0.8),
