@@ -6,6 +6,7 @@ import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/group/views/invite_member_view.dart';
 import 'package:thesis_manage_project/widgets/custom_button.dart';
 import 'package:thesis_manage_project/widgets/loading_indicator.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 
 class GroupDetailView extends StatefulWidget {
   final GroupModel group;
@@ -296,7 +297,7 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                     ),
                   );
                 },
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primary,
                 textColor: Colors.white,
               ),
               const SizedBox(height: 16),
@@ -362,10 +363,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
               ),
             ),
             title: Text(
-              member.fullName,
-              style: TextStyle(
+              member.fullName,              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: currentUserIsThisMember ? Colors.green : Colors.black,
+                color: currentUserIsThisMember ? AppColors.primary : Colors.black,
               ),
             ),
             subtitle: Column(

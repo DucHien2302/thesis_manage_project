@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/components/animated_loading.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 
 class InvitationsView extends StatefulWidget {
   const InvitationsView({Key? key}) : super(key: key);
@@ -72,12 +73,11 @@ class _InvitationsViewState extends State<InvitationsView> with SingleTickerProv
                 break;
               default:
                 message = 'Đã xử lý lời mời';
-            }
-            
+            }            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primary,
               ),
             );
             

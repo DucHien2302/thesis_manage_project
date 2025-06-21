@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 
 class ResetPasswordView extends StatefulWidget {
   final String token;
@@ -69,11 +70,10 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is ResetPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
+          if (state is ResetPasswordSuccess) {            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primary,
               ),
             );
             // Navigate back to login page

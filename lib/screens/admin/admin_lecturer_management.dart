@@ -336,10 +336,9 @@ class _AdminLecturerManagementState extends State<AdminLecturerManagement> {
                     );
                   },
                 ),
-                IconButton(
-                  icon: Icon(
+                IconButton(                  icon: Icon(
                     lecturer['is_active'] ? Icons.block : Icons.check_circle,
-                    color: lecturer['is_active'] ? Colors.red : Colors.green,
+                    color: lecturer['is_active'] ? Colors.red : AppColors.primary,
                   ),
                   onPressed: () {
                     // TODO: Add block/unblock functionality

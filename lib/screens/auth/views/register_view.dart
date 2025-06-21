@@ -46,11 +46,10 @@ class _RegisterViewState extends State<RegisterView> {
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is RegisterSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
+          if (state is RegisterSuccess) {            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primary,
               ),
             );
             Navigator.of(context).pop(); // Return to login page

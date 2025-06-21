@@ -4,6 +4,7 @@ import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/utils/validators.dart';
 import 'package:thesis_manage_project/widgets/custom_button.dart';
 import 'package:thesis_manage_project/widgets/custom_text_field.dart';
+import 'package:thesis_manage_project/config/constants.dart';
 
 class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({Key? key}) : super(key: key);
@@ -39,11 +40,10 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is ForgotPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
+          if (state is ForgotPasswordSuccess) {            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primary,
               ),
             );
             Navigator.of(context).pop(); // Return to login page
