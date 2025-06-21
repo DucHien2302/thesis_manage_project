@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:thesis_manage_project/config/api_config.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
+import 'package:thesis_manage_project/screens/profile/views/profile_information_card.dart';
+import 'package:thesis_manage_project/screens/profile/views/profile_student_card.dart';
+import 'package:thesis_manage_project/screens/profile/views/profile_lecturer_card.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/utils/logger.dart';
 import 'package:thesis_manage_project/widgets/custom_button.dart';
@@ -602,14 +604,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   key: _formKey,
                   onChanged: _onFormChanged,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    crossAxisAlignment: CrossAxisAlignment.start,                    children: [
                       // Basic information card
-                      _buildInformationCard(),
-                      const SizedBox(height: 20), // User type specific card
+                      ProfileInformationCard(
+                        firstNameController: _firstNameController,
+                        lastNameController: _lastNameController,
+                        addressController: _addressController,
+                        phoneController: _phoneController,
+                        selectedDate: _selectedDate,
+                        selectedGender: _selectedGender,
+                        onDateTap: () => _selectDate(context),
+                        onGenderChanged: (value) {
+                          setState(() {
+                            _selectedGender = value ?? 0;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      // User type specific card
                       _userType == AppConfig.userTypeStudent
-                          ? _buildStudentCard() // Student (type 2)
-                          : _buildLecturerCard(), // Lecturer (type 3)
+                          ? ProfileStudentCard(
+                              studentCodeController: _studentCodeController,
+                              classNameController: _classNameController,
+                              selectedMajorId: _selectedMajorId,
+                              majors: _majors,
+                              onMajorChanged: (value) {
+                                setState(() {
+                                  _selectedMajorId = value ?? '';
+                                });
+                              },
+                            ) // Student (type 2)
+                          : ProfileLecturerCard(
+                              lecturerCodeController: _lecturerCodeController,
+                              emailController: _emailController,
+                              titleController: _titleController,
+                              selectedDepartment: _selectedDepartment,
+                              departments: _departments,
+                              onDepartmentChanged: (value) {
+                                setState(() {
+                                  _selectedDepartment = value ?? 1;
+                                });
+                              },
+                            ), // Lecturer (type 3)
                       const SizedBox(height: 30),
                       // Save button
                       Center(
@@ -628,369 +664,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
     );
-  }
-
-  // Basic information card
-  Widget _buildInformationCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Thông tin cá nhân',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            const SizedBox(height: 16),            // First name
-            TextFormField(
-              controller: _firstNameController,
-              decoration: const InputDecoration(
-                labelText: 'Họ',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 50 ký tự',
-              ),
-              maxLength: 50,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập họ';
-                }
-                if (value.length > 50) {
-                  return 'Họ không được vượt quá 50 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),            // Last name
-            TextFormField(
-              controller: _lastNameController,
-              decoration: const InputDecoration(
-                labelText: 'Tên',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 50 ký tự',
-              ),
-              maxLength: 50,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập tên';
-                }
-                if (value.length > 50) {
-                  return 'Tên không được vượt quá 50 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            // Gender selection
-            DropdownButtonFormField<int>(
-              value: _selectedGender,
-              decoration: const InputDecoration(
-                labelText: 'Giới tính',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(value: 0, child: Text('Nam')),
-                DropdownMenuItem(value: 1, child: Text('Nữ')),
-                DropdownMenuItem(value: 2, child: Text('Khác')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedGender = value ?? 0;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            // Date of birth
-            InkWell(
-              onTap: () => _selectDate(context),
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Ngày sinh',
-                  border: OutlineInputBorder(),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
-                    const Icon(Icons.calendar_today),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),            // Address
-            TextFormField(
-              controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Địa chỉ',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 255 ký tự',
-              ),
-              maxLength: 255,
-              maxLines: 2,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập địa chỉ';
-                }
-                if (value.length > 255) {
-                  return 'Địa chỉ không được vượt quá 255 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),            // Phone
-            TextFormField(
-              controller: _phoneController,
-              decoration: const InputDecoration(
-                labelText: 'Số điện thoại',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 15 ký tự',
-              ),
-              maxLength: 15,
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập số điện thoại';
-                }
-                if (value.length > 15) {
-                  return 'Số điện thoại không được vượt quá 15 ký tự';
-                }
-                // Basic phone number validation
-                if (!RegExp(r'^\d{10,15}$').hasMatch(value.replaceAll(RegExp(r'[\s\-\(\)]'), ''))) {
-                  return 'Số điện thoại không hợp lệ';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Student specific information card
-  Widget _buildStudentCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Thông tin sinh viên',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            const SizedBox(height: 16),            // Student code
-            TextFormField(
-              controller: _studentCodeController,
-              decoration: const InputDecoration(
-                labelText: 'Mã số sinh viên',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 20 ký tự',
-              ),
-              maxLength: 20,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập mã số sinh viên';
-                }
-                if (value.length > 20) {
-                  return 'Mã số sinh viên không được vượt quá 20 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),            // Class name
-            TextFormField(
-              controller: _classNameController,
-              decoration: const InputDecoration(
-                labelText: 'Lớp',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 50 ký tự',
-              ),
-              maxLength: 50,
-              validator: (value) {
-                if (value != null && value.length > 50) {
-                  return 'Tên lớp không được vượt quá 50 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16), // Major selection
-            DropdownButtonFormField<String>(
-              value:
-                  _selectedMajorId.isNotEmpty &&
-                          _majors.isNotEmpty &&
-                          _majors.any(
-                            (m) => m['id'].toString() == _selectedMajorId,
-                          )
-                      ? _selectedMajorId
-                      : (_majors.isNotEmpty ? _majors[0]['id'].toString() : ''),
-              decoration: const InputDecoration(
-                labelText: 'Chuyên ngành',
-                border: OutlineInputBorder(),
-              ),
-              items:
-                  _majors.isEmpty
-                      ? [
-                        const DropdownMenuItem<String>(
-                          value: '',
-                          child: Text('Đang tải...'),
-                        ),
-                      ]
-                      : _majors.map((major) {
-                        String id = major['id'].toString();
-                        String name = major['name'].toString();
-                        _logger.debug('Major item: $id: $name');
-                        return DropdownMenuItem<String>(
-                          value: id,
-                          child: Text(name),
-                        );
-                      }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedMajorId = value ?? '';
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng chọn chuyên ngành';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Lecturer specific information card
-  Widget _buildLecturerCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Thông tin giảng viên',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            const SizedBox(height: 16),            // Lecturer code
-            TextFormField(
-              controller: _lecturerCodeController,
-              decoration: const InputDecoration(
-                labelText: 'Mã số giảng viên',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 20 ký tự',
-              ),
-              maxLength: 20,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập mã số giảng viên';
-                }
-                if (value.length > 20) {
-                  return 'Mã số giảng viên không được vượt quá 20 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),            // Email
-            TextFormField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 100 ký tự',
-              ),
-              maxLength: 100,
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập email';
-                }
-                if (value.length > 100) {
-                  return 'Email không được vượt quá 100 ký tự';
-                }
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(value)) {
-                  return 'Email không hợp lệ';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),            // Title
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Chức danh',
-                border: OutlineInputBorder(),
-                helperText: 'Tối đa 100 ký tự',
-              ),
-              maxLength: 100,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập chức danh';
-                }
-                if (value.length > 100) {
-                  return 'Chức danh không được vượt quá 100 ký tự';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16), // Department selection
-            DropdownButtonFormField<int>(
-              value:
-                  _departments.isNotEmpty && _selectedDepartment != 0
-                      ? _selectedDepartment
-                      : (_departments.isNotEmpty ? _departments[0]['id'] : 1),
-              decoration: const InputDecoration(
-                labelText: 'Khoa',
-                border: OutlineInputBorder(),
-              ),
-              items:
-                  _departments.isEmpty
-                      ? [
-                        const DropdownMenuItem<int>(
-                          value: 1,
-                          child: Text('Đang tải...'),
-                        ),
-                      ]
-                      : _departments.map((department) {
-                        int id =
-                            department['id'] is int
-                                ? department['id']
-                                : int.tryParse(department['id'].toString()) ??
-                                    1;
-                        String name = department['name'].toString();
-                        _logger.debug('Department item: $id: $name');
-                        return DropdownMenuItem<int>(
-                          value: id,
-                          child: Text(name),
-                        );
-                      }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedDepartment = value ?? 1;
-                });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Vui lòng chọn khoa';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+  }}
