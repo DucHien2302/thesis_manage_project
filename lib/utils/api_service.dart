@@ -162,7 +162,7 @@ class ApiService {
           ? responseData['detail'] 
           : 'Bạn không có quyền truy cập tài nguyên này.');
     } else if (statusCode == 404) {
-      throw Exception(responseData is Map && responseData['detail'] != null 
+      throw (responseData is Map && responseData['detail'] != null 
           ? responseData['detail'] 
           : 'Tài nguyên không tồn tại.');
     } else if (statusCode == 422) {
