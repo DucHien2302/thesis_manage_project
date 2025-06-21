@@ -137,15 +137,6 @@ class RevokeInviteEvent extends GroupEvent {
   List<Object?> get props => [inviteId];
 }
 
-class GetGroupDetailEvent extends GroupEvent {
-  final String groupId;
-
-  const GetGroupDetailEvent({required this.groupId});
-
-  @override
-  List<Object?> get props => [groupId];
-}
-
 // States
 abstract class GroupState extends Equatable {
   const GroupState();
@@ -229,15 +220,6 @@ class GroupNameUpdatedState extends GroupState {
 
 class GroupDissolvedState extends GroupState {}
 
-class GroupDetailLoadedState extends GroupState {
-  final GroupModel group;
-
-  const GroupDetailLoadedState({required this.group});
-
-  @override
-  List<Object?> get props => [group];
-}
-
 class GroupErrorState extends GroupState {
   final String error;
 
@@ -269,10 +251,10 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     on<SendInviteEvent>(_onSendInvite);
     on<GetMyInvitesEvent>(_onGetMyInvites);
     on<AcceptInviteEvent>(_onAcceptInvite);
-    on<RejectInviteEvent>(_onRejectInvite);    on<RevokeInviteEvent>(_onRevokeInvite);
+    on<RejectInviteEvent>(_onRejectInvite);
+    on<RevokeInviteEvent>(_onRevokeInvite);
     on<UpdateGroupNameEvent>(_onUpdateGroupName);
     on<DissolveGroupEvent>(_onDissolveGroup);
-    on<GetGroupDetailEvent>(_onGetGroupDetail);
   }  Future<void> _onGetMyGroups(GetMyGroupsEvent event, Emitter<GroupState> emit) async {
     // Prevent multiple concurrent requests
     if (_isFetching) return;
@@ -447,14 +429,6 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       }
       
       emit(GroupDissolvedState());
-    } catch (e) {
-      emit(GroupErrorState(error: e.toString()));
-    }  }
-
-  Future<void> _onGetGroupDetail(GetGroupDetailEvent event, Emitter<GroupState> emit) async {
-    try {
-      final group = await groupRepository.getGroupDetails(event.groupId);
-      emit(GroupDetailLoadedState(group: group));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
