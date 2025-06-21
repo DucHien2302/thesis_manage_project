@@ -26,6 +26,7 @@ class _InviteMemberViewState extends State<InviteMemberView> {
   bool _isLoading = true;
   bool _isInviting = false;
   String? _currentUserId;
+  String? _lastErrorMessage; // To prevent duplicate error messages
 
   @override
   void initState() {
@@ -136,17 +137,20 @@ class _InviteMemberViewState extends State<InviteMemberView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mời thành viên'),
-      ),
-      body: BlocListener<GroupBloc, GroupState>(
+      ),      body: BlocListener<GroupBloc, GroupState>(
         listener: (context, state) {
           if (state is GroupErrorState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.error)),
-            );
+            // Prevent duplicate error messages
+            if (_lastErrorMessage != state.error) {
+              _lastErrorMessage = state.error;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.error)),
+              );
+            }
             setState(() {
               _isInviting = false;
-            });
-          } else if (state is InviteSentState) {
+            });          } else if (state is InviteSentState) {
+            _lastErrorMessage = null; // Reset error message on success
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Đã gửi lời mời thành công')),
             );
