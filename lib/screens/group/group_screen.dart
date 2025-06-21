@@ -32,7 +32,6 @@ class _GroupScreenState extends State<GroupScreen>
     _tabController.dispose();
     super.dispose();
   }
-
   void _onTabChanged() {
     if (!_tabController.indexIsChanging) {
       // Tab changed programmatically or user finished swiping
@@ -40,6 +39,11 @@ class _GroupScreenState extends State<GroupScreen>
         // Tab "Nhóm của tôi" was selected
         if (mounted) {
           context.read<GroupBloc>().add(GetMyGroupsEvent());
+        }
+      } else if (_tabController.index == 1) {
+        // Tab "Lời mời" was selected
+        if (mounted) {
+          context.read<GroupBloc>().add(GetMyInvitesEvent());
         }
       }
     }
