@@ -4,6 +4,7 @@ import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/group/views/group_detail_view.dart';
+import 'package:thesis_manage_project/screens/group/widgets/create_group_dialog.dart';
 import 'package:thesis_manage_project/widgets/loading_indicator.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 
@@ -54,25 +55,32 @@ class _MyGroupsViewState extends State<MyGroupsView>
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
-            );
-          } else if (state is GroupCreatedState) {
+            );          } else if (state is GroupCreatedState) {
             // Refresh the list after creating a new group
             context.read<GroupBloc>().add(GetMyGroupsEvent());
+            final memberCount = state.group.members.length;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Row(
+                content: Row(
                   children: [
-                    Icon(Icons.check_circle_outline, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('Tạo nhóm thành công'),
+                    const Icon(Icons.check_circle_outline, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tạo nhóm "${state.group.name}" thành công! ($memberCount thành viên)',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
                   ],
                 ),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
+                duration: const Duration(seconds: 3),
               ),
-            );          }
+            );
+          }
         },
         builder: (context, state) {
           if (state is GroupLoadingState) {
@@ -100,35 +108,30 @@ class _MyGroupsViewState extends State<MyGroupsView>
           }
         },
       ),
-      floatingActionButton: _buildFloatingActionButton(),
-    );
-  }
-
-  Widget _buildFloatingActionButton() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => CreateGroupDialog.show(context),
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.textLight,
+          elevation: 0,
+          icon: const Icon(Icons.add, size: 20),
+          label: const Text(
+            'Tạo nhóm',
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: () => _showCreateGroupDialog(context),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
-        elevation: 0,
-        icon: const Icon(Icons.add, size: 20),
-        label: const Text(
-          'Tạo nhóm',
-          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-    );
-  }
+    );  }
 
   Widget _buildEmptyGroupMessage() {
     return Center(
@@ -171,9 +174,8 @@ class _MyGroupsViewState extends State<MyGroupsView>
             const SizedBox(height: AppDimens.marginExtraLarge),
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showCreateGroupDialog(context),
+                Expanded(                  child: ElevatedButton.icon(
+                    onPressed: () => CreateGroupDialog.show(context),
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('Tạo nhóm mới'),
                     style: ElevatedButton.styleFrom(
@@ -314,118 +316,7 @@ class _MyGroupsViewState extends State<MyGroupsView>
                 ),
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showCreateGroupDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.group_add,
-                color: AppColors.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Tạo nhóm mới',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Nhập tên nhóm để tạo nhóm mới',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: AppDimens.marginMedium),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  hintText: 'Ví dụ: Nhóm 1, Nhóm ABC...',
-                  labelText: 'Tên nhóm *',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.marginMedium,
-                    vertical: AppDimens.marginMedium,
-                  ),
-                ),
-                autofocus: true,
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Hủy',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textLight,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-                ),
-              ),
-              child: const Text(
-                'Tạo nhóm',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              onPressed: () {
-                if (nameController.text.trim().isNotEmpty) {
-                  context.read<GroupBloc>().add(
-                    CreateGroupEvent(name: nameController.text.trim()),
-                  );
-                  Navigator.of(dialogContext).pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Vui lòng nhập tên nhóm'),
-                      backgroundColor: AppColors.warning,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-        );
+          ),        );
       },
     );
   }
