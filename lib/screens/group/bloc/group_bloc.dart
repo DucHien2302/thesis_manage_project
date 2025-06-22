@@ -137,6 +137,19 @@ class RevokeInviteEvent extends GroupEvent {
   List<Object?> get props => [inviteId];
 }
 
+class RegisterThesisEvent extends GroupEvent {
+  final String groupId;
+  final String thesisId;
+
+  const RegisterThesisEvent({
+    required this.groupId,
+    required this.thesisId,
+  });
+
+  @override
+  List<Object?> get props => [groupId, thesisId];
+}
+
 // States
 abstract class GroupState extends Equatable {
   const GroupState();
@@ -229,6 +242,15 @@ class GroupNameUpdatedState extends GroupState {
 
 class GroupDissolvedState extends GroupState {}
 
+class ThesisRegisteredState extends GroupState {
+  final GroupModel updatedGroup;
+
+  const ThesisRegisteredState({required this.updatedGroup});
+
+  @override
+  List<Object?> get props => [updatedGroup];
+}
+
 class GroupErrorState extends GroupState {
   final String error;
 
@@ -260,10 +282,10 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     on<SendInviteEvent>(_onSendInvite);
     on<GetMyInvitesEvent>(_onGetMyInvites);
     on<AcceptInviteEvent>(_onAcceptInvite);
-    on<RejectInviteEvent>(_onRejectInvite);
-    on<RevokeInviteEvent>(_onRevokeInvite);
+    on<RejectInviteEvent>(_onRejectInvite);    on<RevokeInviteEvent>(_onRevokeInvite);
     on<UpdateGroupNameEvent>(_onUpdateGroupName);
     on<DissolveGroupEvent>(_onDissolveGroup);
+    on<RegisterThesisEvent>(_onRegisterThesis);
   }  Future<void> _onGetMyGroups(GetMyGroupsEvent event, Emitter<GroupState> emit) async {
     // Prevent multiple concurrent requests
     if (_isFetching) return;
@@ -451,6 +473,26 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       }
       
       emit(GroupDissolvedState());
+    } catch (e) {
+      emit(GroupErrorState(error: e.toString()));
+    }  }
+
+  // Register thesis for group
+  Future<void> _onRegisterThesis(RegisterThesisEvent event, Emitter<GroupState> emit) async {
+    try {
+      emit(GroupLoadingState());
+      final updatedGroup = await groupRepository.registerThesis(event.groupId, event.thesisId);
+      
+      // Update cache if exists
+      if (_cachedGroups != null) {
+        final index = _cachedGroups!.indexWhere((group) => group.id == event.groupId);
+        if (index != -1) {
+          _cachedGroups![index] = updatedGroup;
+          _lastGroupsUpdate = DateTime.now();
+        }
+      }
+      
+      emit(ThesisRegisteredState(updatedGroup: updatedGroup));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }

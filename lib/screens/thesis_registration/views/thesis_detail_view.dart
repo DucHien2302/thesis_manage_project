@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/models/thesis_models.dart';
+import 'package:thesis_manage_project/screens/thesis_registration/blocs/thesis_registration_bloc.dart';
+import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 
 class ThesisDetailView extends StatefulWidget {
   final ThesisModel thesis;
@@ -20,17 +23,36 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
   final TextEditingController _notesController = TextEditingController();
 
   @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadMyGroups();
+  }
+
+  // Load danh sách nhóm của user hiện tại
+  void _loadMyGroups() {
+    context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
   }
   @override
+  void dispose() {
+    // When the view is disposed (including when back button is pressed),
+    // reload the thesis list data
+    context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
+    _notesController.dispose();
+    super.dispose();
+  }@override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chi tiết đề tài'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textLight,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Pop and trigger reload
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimens.marginMedium),
@@ -45,10 +67,39 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
             const SizedBox(height: AppDimens.marginMedium),
             _buildLecturerInfoCard(),
             const SizedBox(height: AppDimens.marginMedium),
-            _buildRegistrationInfoCard(),
-            const SizedBox(height: AppDimens.marginLarge),
-            if (widget.thesis.isRegistrationOpen)
-              _buildRegisterButton(),
+            _buildRegistrationInfoCard(),            const SizedBox(height: AppDimens.marginLarge),
+            BlocBuilder<ThesisRegistrationBloc, ThesisRegistrationState>(
+              builder: (context, state) {
+                bool userHasRegisteredThesis = false;
+                
+                // Kiểm tra từ state GroupsLoaded xem có nhóm nào đã đăng ký đề tài chưa
+                if (state is GroupsLoaded) {
+                  final authState = context.read<AuthBloc>().state;
+                  if (authState is Authenticated) {
+                    final currentUserId = authState.user['id']?.toString();
+                    final userGroups = state.groups.where((group) => group.leaderId == currentUserId).toList();
+                    userHasRegisteredThesis = userGroups.any((group) => group.thesisId != null && group.thesisId!.isNotEmpty);
+                  }
+                }
+                
+                if (widget.thesis.isRegistrationOpen && !userHasRegisteredThesis) {
+                  return _buildRegisterButton();
+                } else if (userHasRegisteredThesis) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.block),
+                      label: const Text('Bạn đã đăng ký đề tài khác'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: AppDimens.marginMedium),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ],
         ),
       ),
@@ -218,8 +269,7 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
   }
   Widget _buildRegisterButton() {
     return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
+      width: double.infinity,      child: ElevatedButton.icon(
         onPressed: _showRegisterDialog,
         icon: const Icon(Icons.add),
         label: const Text('Đăng ký đề tài'),
@@ -229,55 +279,201 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
       ),
     );
   }
-
   void _showRegisterDialog() {
+    // Load groups first
+    context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
+    
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => BlocConsumer<ThesisRegistrationBloc, ThesisRegistrationState>(
+        bloc: context.read<ThesisRegistrationBloc>(),
+        listener: (context, state) {
+          if (state is ThesisRegistrationSuccess) {
+            Navigator.pop(dialogContext);
+            ScaffoldMessenger.of(this.context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else if (state is ThesisRegistrationError) {
+            Navigator.pop(dialogContext);
+            ScaffoldMessenger.of(this.context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is GroupsLoading) {
+            return const AlertDialog(
+              title: Text('Đang tải...'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Đang tải danh sách nhóm...'),
+                ],
+              ),
+            );
+          } else if (state is GroupsLoaded) {
+            final authState = this.context.read<AuthBloc>().state;
+            if (authState is! Authenticated) {
+              return AlertDialog(
+                title: const Text('Lỗi'),
+                content: const Text('Phiên đăng nhập đã hết hạn'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Đóng'),
+                  ),
+                ],
+              );
+            }
+
+            final currentUserId = authState.user['id']?.toString();
+            final leaderGroups = state.groups.where((group) => group.leaderId == currentUserId).toList();
+            
+            if (leaderGroups.isEmpty) {
+              return AlertDialog(
+                title: const Text('Không có nhóm'),
+                content: const Text('Bạn chưa là trưởng nhóm của nhóm nào. Vui lòng tạo nhóm hoặc được chỉ định làm trưởng nhóm.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Đóng'),
+                  ),
+                ],
+              );
+            }
+
+            // Lọc các nhóm chưa đăng ký đề tài nào
+            final availableGroups = leaderGroups.where((group) => group.thesisId == null || group.thesisId!.isEmpty).toList();
+
+            if (availableGroups.isEmpty) {
+              return AlertDialog(
+                title: const Text('Không có nhóm khả dụng'),
+                content: const Text('Tất cả nhóm của bạn đã đăng ký đề tài khác rồi.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Đóng'),
+                  ),
+                ],
+              );
+            }
+
+            return AlertDialog(
+              title: const Text('Chọn nhóm để đăng ký'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: availableGroups.length,
+                  itemBuilder: (context, index) {
+                    final group = availableGroups[index];
+                    return ListTile(
+                      title: Text(group.name ?? 'Nhóm ${index + 1}'),
+                      subtitle: Text('Trưởng nhóm • ${group.members.length} thành viên'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => _registerThesisForGroup(group.id),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Hủy'),
+                ),
+              ],
+            );
+          } else if (state is GroupsError) {
+            return AlertDialog(
+              title: const Text('Lỗi'),
+              content: Text(state.message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Đóng'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
+                  },
+                  child: const Text('Thử lại'),
+                ),
+              ],
+            );
+          } else if (state is ThesisRegistering) {
+            return const AlertDialog(
+              title: Text('Đang đăng ký...'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Đang đăng ký đề tài...'),
+                ],
+              ),
+            );
+          }
+
+          // Default state
+          return AlertDialog(
+            title: const Text('Đang tải...'),
+            content: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Vui lòng chờ...'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Hủy'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // Đăng ký đề tài cho nhóm
+  void _registerThesisForGroup(String groupId) {
+    // Hiển thị dialog xác nhận
+    showDialog(
+      context: context,
+      builder: (confirmContext) => AlertDialog(
         title: const Text('Xác nhận đăng ký'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Bạn có muốn đăng ký đề tài "${widget.thesis.title}"?'),
-            const SizedBox(height: AppDimens.marginMedium),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Ghi chú (tùy chọn)',
-                hintText: 'Nhập ghi chú cho đơn đăng ký...',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              maxLength: 500,
-            ),
-            const SizedBox(height: AppDimens.marginRegular),
-            const Text(
-              'Lưu ý: Sau khi đăng ký, bạn cần chờ giảng viên duyệt.',
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
+        content: Text('Bạn có chắc chắn muốn đăng ký đề tài "${widget.thesis.title}" cho nhóm này?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.pop(confirmContext),
             child: const Text('Hủy'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(dialogContext);
-              // TODO: Hiển thị dialog chọn nhóm trước khi đăng ký
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Chức năng đăng ký đang được phát triển'),
-                  backgroundColor: Colors.orange,
+              Navigator.pop(confirmContext);
+              // Gọi bloc để đăng ký
+              context.read<ThesisRegistrationBloc>().add(
+                RegisterThesisForGroup(
+                  groupId: groupId,
+                  thesisId: widget.thesis.id,
                 ),
               );
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Đăng ký'),
           ),
         ],

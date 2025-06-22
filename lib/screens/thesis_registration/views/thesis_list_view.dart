@@ -17,11 +17,12 @@ class ThesisListView extends StatefulWidget {
   State<ThesisListView> createState() => _ThesisListViewState();
 }
 
-class _ThesisListViewState extends State<ThesisListView> {
-  @override
+class _ThesisListViewState extends State<ThesisListView> {  @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialData();
+    });
   }
 
   void _loadInitialData() {
@@ -50,8 +51,7 @@ class _ThesisListViewState extends State<ThesisListView> {
           ),
         ],
       ),
-      body: BlocConsumer<ThesisRegistrationBloc, ThesisRegistrationState>(
-        listener: (context, state) {
+      body: BlocConsumer<ThesisRegistrationBloc, ThesisRegistrationState>(        listener: (context, state) {
           if (state is ThesisRegistrationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -60,6 +60,9 @@ class _ThesisListViewState extends State<ThesisListView> {
               ),
             );
             _onRefresh(); // Refresh danh sách sau khi đăng ký thành công
+            
+            // Trả về signal để parent widget biết có thay đổi
+            Navigator.pop(context, true);
           } else if (state is ThesisRegistrationError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -132,18 +135,24 @@ class _ThesisListViewState extends State<ThesisListView> {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),        onTap: () {
-          Navigator.push(
+      ),      child: InkWell(
+        borderRadius: BorderRadius.circular(12),        onTap: () async {
+          final bloc = context.read<ThesisRegistrationBloc>();
+          await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ThesisDetailView(
-                thesis: thesis,
-                studentId: widget.studentId,
+              builder: (context) => BlocProvider.value(
+                value: bloc,
+                child: ThesisDetailView(
+                  thesis: thesis,
+                  studentId: widget.studentId,
+                ),
               ),
             ),
           );
+          
+          // Reload theses when returning from detail view
+          _onRefresh();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -260,28 +269,21 @@ class _ThesisListViewState extends State<ThesisListView> {
                         ),
                       ],
                     ),
-                  ),
-                  // Trạng thái
+                  ),                  // Trạng thái đề tài
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: thesis.isRegistrationOpen
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.orange.withOpacity(0.1),
+                      color: _getStatusColor(thesis).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      thesis.isRegistrationOpen
-                          ? 'Đang mở đăng ký'
-                          : 'Đã đóng đăng ký',
+                      _getStatusText(thesis),
                       style: TextStyle(
                         fontSize: 12,
-                        color: thesis.isRegistrationOpen
-                            ? Colors.green
-                            : Colors.orange,
+                        color: _getStatusColor(thesis),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -333,5 +335,31 @@ class _ThesisListViewState extends State<ThesisListView> {
         ],
       ),
     );
+  }
+  // Helper methods để xác định trạng thái đề tài
+  String _getStatusText(ThesisModel thesis) {
+    // Kiểm tra theo thứ tự ưu tiên
+    if (thesis.status == 'Đã được đăng ký') {
+      return 'Đã có nhóm đăng ký';
+    } else if (thesis.status == 'Chờ duyệt') {
+      return 'Chờ duyệt';
+    } else if (thesis.status == 'Chưa được đăng ký' && thesis.isRegistrationOpen) {
+      return 'Đang mở đăng ký';
+    } else {
+      return 'Đã đóng đăng ký';
+    }
+  }
+  
+  Color _getStatusColor(ThesisModel thesis) {
+    // Kiểm tra theo thứ tự ưu tiên
+    if (thesis.status == 'Đã được đăng ký') {
+      return Colors.red; // Đã được đăng ký
+    } else if (thesis.status == 'Chờ duyệt') {
+      return Colors.blue; // Chờ duyệt
+    } else if (thesis.status == 'Chưa được đăng ký' && thesis.isRegistrationOpen) {
+      return Colors.green; // Đang mở đăng ký
+    } else {
+      return Colors.orange; // Đã đóng đăng ký hoặc trạng thái khác
+    }
   }
 }

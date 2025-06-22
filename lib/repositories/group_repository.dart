@@ -109,4 +109,18 @@ class GroupRepository {
     final response = await _apiService.get('/invite/all-my-invites');
     return AllInvitesResponse.fromJson(response);
   }
+
+  /// Register thesis for group
+  /// API để nhóm trưởng đăng ký một đề tài cho nhóm của mình
+  Future<GroupModel> registerThesis(String groupId, String thesisId) async {
+    try {
+      print('Debug: Registering thesis $thesisId for group $groupId');
+      final response = await _apiService.post('/group/$groupId/register-thesis/$thesisId');
+      print('Debug: Register thesis response: $response');
+      return GroupModel.fromJson(response);
+    } catch (e) {
+      print('Debug: Error registering thesis: $e');
+      throw Exception('Không thể đăng ký đề tài: $e');
+    }
+  }
 }

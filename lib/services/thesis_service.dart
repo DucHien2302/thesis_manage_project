@@ -137,9 +137,9 @@ class ThesisService {
     } catch (e) {
       throw Exception('Lỗi kết nối: $e');
     }
-  }  /// Lấy danh sách đăng ký đề tài của sinh viên
-  Future<List<dynamic>> getStudentRegistrations(
-    String studentId,
+  }  /// Lấy thông tin đề tài theo ID
+  Future<ThesisModel> getStudentRegistrations(
+    String thesisId,
   ) async {
     try {
       final token = await _getToken();
@@ -147,18 +147,22 @@ class ThesisService {
         throw Exception('Token không tồn tại');
       }
 
+      // Sử dụng API đúng: /theses/{thesis_id} để lấy thông tin đề tài
+      // Endpoint: get_thesis_by_id_endpoint_theses__thesis_id__get
       final response = await http.get(
-        Uri.parse('$_baseUrl/api/student-thesis-registrations?student_id=$studentId'),
+        Uri.parse('$_baseUrl/theses/$thesisId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-      );      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
-        return jsonData; // Trả về dynamic data tạm thời
+      );
+      
+      if (response.statusCode == 200) {
+        final dynamic jsonData = json.decode(response.body);
+        return ThesisModel.fromJson(jsonData);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Lỗi khi tải danh sách đăng ký');
+        throw Exception(errorData['message'] ?? 'Lỗi khi tải thông tin đề tài');
       }
     } catch (e) {
       throw Exception('Lỗi kết nối: $e');
