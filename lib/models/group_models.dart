@@ -9,12 +9,15 @@ class GroupModel extends Equatable {
   final String? name;
   @JsonKey(name: 'leader_id')
   final String leaderId;
+  @JsonKey(name: 'thesis_id')
+  final String? thesisId;
   final List<MemberDetailModel> members;
 
   const GroupModel({
     required this.id,
     this.name,
     required this.leaderId,
+    this.thesisId,
     this.members = const [],
   });
 
@@ -22,7 +25,7 @@ class GroupModel extends Equatable {
   Map<String, dynamic> toJson() => _$GroupModelToJson(this);
 
   @override
-  List<Object?> get props => [id, name, leaderId, members];
+  List<Object?> get props => [id, name, leaderId, thesisId, members];
 }
 
 @JsonSerializable()

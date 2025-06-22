@@ -97,19 +97,21 @@ class ThesisRegistrationBloc extends Bloc<ThesisRegistrationEvent, ThesisRegistr
     Emitter<ThesisRegistrationState> emit,
   ) async {
     add(const LoadThesesByMyMajor());
-  }
-
-  /// Xử lý event load danh sách đăng ký của sinh viên
+  }  /// Xử lý event load danh sách đăng ký của sinh viên
   Future<void> _onLoadStudentRegistrations(
     LoadStudentRegistrations event,
     Emitter<ThesisRegistrationState> emit,
   ) async {
     try {
-      emit(const RegistrationsLoading());
-      final registrations = await _thesisService.getStudentRegistrations(event.studentId);
-      emit(RegistrationsLoaded(registrations: registrations));
+      emit(const StudentRegistrationsLoading());
+      // Instead of using getStudentRegistrations (which is misleading),
+      // we should use getThesisDetail directly with a proper thesis ID
+      // This is temporary until we implement proper student thesis registration lookup
+      // In this case, event.studentId would actually contain a thesis ID
+      final thesis = await _thesisService.getThesisDetail(event.studentId);
+      emit(ThesisDetailLoaded(thesis));
     } catch (e) {
-      emit(RegistrationsError(e.toString()));
+      emit(StudentRegistrationsError(e.toString()));
     }
   }
 }
