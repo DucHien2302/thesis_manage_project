@@ -6,6 +6,8 @@ import 'package:thesis_manage_project/screens/admin/admin_dashboard.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/lecturer/lecturer_dashboard.dart';
 import 'package:thesis_manage_project/screens/student/student_dashboard.dart';
+import 'package:thesis_manage_project/screens/dashboard/views/dashboard_loading_view.dart';
+import 'package:thesis_manage_project/screens/dashboard/views/dashboard_error_view.dart';
 
 class RoleBasedDashboard extends StatefulWidget {
   const RoleBasedDashboard({super.key});
@@ -54,16 +56,17 @@ class _RoleBasedDashboardState extends State<RoleBasedDashboard> {
             isLoading = false;
           });
         }
-      },
-      child: isLoading
-          ? const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
+      },      child: isLoading
+          ? const DashboardLoadingView()
           : _buildDashboardForUserType(),
     );
   }  Widget _buildDashboardForUserType() {
+    if (userType == null) {
+      return DashboardErrorView(
+        onRetry: _loadUserType,
+      );
+    }
+    
     switch (userType) {
       case AppConfig.userTypeAdmin:
         return const AdminDashboard();
