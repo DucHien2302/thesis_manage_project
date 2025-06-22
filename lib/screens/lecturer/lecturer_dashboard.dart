@@ -60,22 +60,29 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
       'pageTitle': 'Hồ sơ',
     },
   ];
-
   @override
   void initState() {
     super.initState();
     // Load profile data after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      if (authState is Authenticated) {
-        // Reset ProfileBloc state first, then load new profile
-        final profileBloc = context.read<ProfileBloc>();
-        profileBloc.add(LoadProfile(
-          userType: authState.user['user_type'] ?? 0,
-          userId: authState.user['id'] ?? '',
+      _loadProfileData();
+    });
+  }
+
+  void _loadProfileData() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final userType = authState.user['user_type'] ?? 0;
+      final userId = authState.user['id'] ?? '';
+      
+      // Only load if we're dealing with a lecturer
+      if (userType == AppConfig.userTypeLecturer) {
+        context.read<ProfileBloc>().add(LoadProfile(
+          userType: userType,
+          userId: userId,
         ));
       }
-    });
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -119,9 +126,104 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
     );
   }
 
+  void _showLecturerQuickInfo(BuildContext context, dynamic lecturerProfile) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: AppColors.info),
+            const SizedBox(width: 8),
+            const Text('Thông tin giảng viên'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoRow('Họ tên', '${lecturerProfile.information.firstName} ${lecturerProfile.information.lastName}'),
+            _buildInfoRow('Mã GV', lecturerProfile.lecturerInfo.lecturerCode),
+            _buildInfoRow('Khoa', lecturerProfile.lecturerInfo.departmentName ?? 'Chưa cập nhật'),
+            _buildInfoRow('Chức danh', lecturerProfile.lecturerInfo.title.isNotEmpty ? lecturerProfile.lecturerInfo.title : 'Chưa cập nhật'),
+            _buildInfoRow('Email', lecturerProfile.lecturerInfo.email.isNotEmpty ? lecturerProfile.lecturerInfo.email : 'Chưa cập nhật'),
+            _buildInfoRow('Điện thoại', lecturerProfile.information.telPhone.isNotEmpty ? lecturerProfile.information.telPhone : 'Chưa cập nhật'),
+            _buildInfoRow('Địa chỉ', lecturerProfile.information.address.isNotEmpty ? lecturerProfile.information.address : 'Chưa cập nhật'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _currentIndex = 5; // Navigate to profile page
+                _currentPageTitle = 'Hồ sơ';
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.info,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Xem chi tiết'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        // Log state changes for debugging
+        if (state is ProfileLoaded) {
+          print('[LecturerDashboard] Profile loaded: ${state.lecturerProfile?.information.firstName} ${state.lecturerProfile?.information.lastName}');
+        } else if (state is ProfileError) {
+          print('[LecturerDashboard] Profile error: ${state.message}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi tải thông tin: ${state.message}'),
+              backgroundColor: AppColors.error,
+              action: SnackBarAction(
+                label: 'Thử lại',
+                onPressed: _loadProfileData,
+              ),
+            ),
+          );
+        } else if (state is ProfileLoading) {
+          print('[LecturerDashboard] Profile loading...');
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_currentPageTitle),
         backgroundColor: AppColors.info,
@@ -133,7 +235,16 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
               colors: [AppColors.info, AppColors.info.withOpacity(0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-            ),
+            ),          ),
+        ),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              // Refresh profile data when opening drawer
+              _loadProfileData();
+              Scaffold.of(context).openDrawer();
+            },
           ),
         ),
         actions: [
@@ -188,17 +299,16 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
               icon: const Icon(Icons.add),
               label: const Text('Tạo mới'),
               backgroundColor: AppColors.info,
-              foregroundColor: Colors.white,
-            )
+              foregroundColor: Colors.white,            )
           : null,
+      ),
     );
   }
 
   Widget _buildDrawer() {
     return Drawer(
       child: Column(
-        children: [
-          // Drawer Header với thông tin từ API
+        children: [          // Drawer Header với thông tin từ API
           BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, profileState) {
               return Container(
@@ -211,75 +321,172 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
                   ),
                 ),
                 child: SafeArea(
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 25,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          size: 28,
-                          color: AppColors.info,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                  child: GestureDetector(
+                    onLongPress: () {
+                      if (profileState is ProfileLoaded && profileState.lecturerProfile != null) {
+                        _showLecturerQuickInfo(context, profileState.lecturerProfile!);
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            if (profileState is ProfileLoaded && profileState.lecturerProfile != null) ...[
-                              Text(
-                                '${profileState.lecturerProfile!.information.firstName} ${profileState.lecturerProfile!.information.lastName}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Colors.white,
+                              child: profileState is ProfileLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.info),
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.school,
+                                      size: 32,
+                                      color: AppColors.info,
+                                    ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (profileState is ProfileLoaded && profileState.lecturerProfile != null) ...[
+                                    Text(
+                                      '${profileState.lecturerProfile!.information.firstName} ${profileState.lecturerProfile!.information.lastName}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        'GV: ${profileState.lecturerProfile!.lecturerInfo.lecturerCode}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      profileState.lecturerProfile!.lecturerInfo.departmentName ?? 'Chưa cập nhật khoa',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ] else if (profileState is ProfileLoading) ...[
+                                    const Text(
+                                      'Đang tải thông tin...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Vui lòng chờ',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ] else if (profileState is ProfileError) ...[
+                                    const Text(
+                                      'Lỗi tải thông tin',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Nhấn để thử lại',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    const Text(
+                                      'Giảng viên',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Chưa có thông tin',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'GV: ${profileState.lecturerProfile!.lecturerInfo.lecturerCode}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 1),                              Text(
-                                profileState.lecturerProfile!.lecturerInfo.departmentName ?? 'Chưa cập nhật khoa',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ] else ...[
-                              const Text(
-                                'Giảng viên',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Đang tải thông tin...',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
-                      ),
-                    ],
+                        
+                        // Add a refresh button if there's an error
+                        if (profileState is ProfileError) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: TextButton.icon(
+                              onPressed: _loadProfileData,
+                              icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
+                              label: const Text(
+                                'Tải lại thông tin',
+                                style: TextStyle(color: Colors.white, fontSize: 14),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        
+                        // Hint for long press
+                        if (profileState is ProfileLoaded && profileState.lecturerProfile != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Nhấn giữ để xem thông tin chi tiết',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.7),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -346,8 +553,7 @@ class _LecturerDashboardState extends State<LecturerDashboard> {
             ),
             onTap: () {
               Navigator.pop(context);
-              _showLogoutDialog(context);
-            },
+              _showLogoutDialog(context);            },
           ),
         ],
       ),
