@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/repositories/group_repository.dart';
@@ -167,6 +167,15 @@ class GroupCreatedState extends GroupState {
   List<Object?> get props => [group];
 }
 
+class GroupCreatingState extends GroupState {
+  final String message;
+
+  const GroupCreatingState({required this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
+
 class MemberAddedState extends GroupState {
   final GroupMemberModel member;
 
@@ -285,16 +294,29 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
       _isFetching = false;
     }
   }  Future<void> _onCreateGroup(CreateGroupEvent event, Emitter<GroupState> emit) async {
-    emit(GroupLoadingState());
+    print('Debug: Creating group with name: ${event.name}');
+    emit(const GroupCreatingState(message: 'Đang tạo nhóm...'));
+    
     try {
+      // Step 1: Create the group
       final group = await groupRepository.createGroup(event.name);
-      // Update cache with new group
+      print('Debug: Group created successfully: ${group.toJson()}');
+      
+      // Step 2: Get detailed group information with members
+      emit(const GroupCreatingState(message: 'Đang tải thông tin nhóm...'));
+      print('Debug: Fetching detailed group info for group ID: ${group.id}');
+      final detailedGroup = await groupRepository.getGroupDetails(group.id);
+      print('Debug: Detailed group info: ${detailedGroup.toJson()}');
+      
+      // Update cache with detailed group information
       if (_cachedGroups != null) {
-        _cachedGroups!.add(group);
+        _cachedGroups!.add(detailedGroup);
         _lastGroupsUpdate = DateTime.now();
       }
-      emit(GroupCreatedState(group: group));
+      
+      emit(GroupCreatedState(group: detailedGroup));
     } catch (e) {
+      print('Debug: Error creating group: $e');
       emit(GroupErrorState(error: e.toString()));
     }
   }
