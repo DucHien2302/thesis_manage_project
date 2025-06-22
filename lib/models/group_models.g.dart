@@ -10,6 +10,7 @@ GroupModel _$GroupModelFromJson(Map<String, dynamic> json) => GroupModel(
   id: json['id'] as String,
   name: json['name'] as String?,
   leaderId: json['leader_id'] as String,
+  thesisId: json['thesis_id'] as String?,
   members:
       (json['members'] as List<dynamic>?)
           ?.map((e) => MemberDetailModel.fromJson(e as Map<String, dynamic>))
@@ -22,6 +23,7 @@ Map<String, dynamic> _$GroupModelToJson(GroupModel instance) =>
       'id': instance.id,
       'name': instance.name,
       'leader_id': instance.leaderId,
+      'thesis_id': instance.thesisId,
       'members': instance.members,
     };
 

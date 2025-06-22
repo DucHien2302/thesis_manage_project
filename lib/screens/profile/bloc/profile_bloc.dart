@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/models/profile_models.dart';

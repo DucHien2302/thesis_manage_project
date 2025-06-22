@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/widgets/modern_card.dart';
-import 'package:thesis_manage_project/widgets/ui_components.dart';
 
 class AdminSystemSettingsTab extends StatelessWidget {
   const AdminSystemSettingsTab({super.key});

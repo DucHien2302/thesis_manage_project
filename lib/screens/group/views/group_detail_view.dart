@@ -4,6 +4,9 @@ import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/group/views/invite_member_view.dart';
+import 'package:thesis_manage_project/screens/thesis_registration/blocs/thesis_registration_bloc.dart';
+import 'package:thesis_manage_project/screens/thesis_registration/views/thesis_list_view.dart';
+import 'package:thesis_manage_project/services/thesis_service.dart';
 import 'package:thesis_manage_project/widgets/custom_button.dart';
 import 'package:thesis_manage_project/widgets/loading_indicator.dart';
 import 'package:thesis_manage_project/config/constants.dart';
@@ -241,12 +244,39 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                     'Thông tin nhóm',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  const Divider(height: 24),
-                  _infoRow('Tên nhóm:', currentGroup.name ?? 'Chưa có tên'),
+                  const Divider(height: 24),                  _infoRow('Tên nhóm:', currentGroup.name ?? 'Chưa có tên'),
                   const SizedBox(height: 8),
                   _infoRow('ID nhóm:', currentGroup.id),
                   const SizedBox(height: 8),
                   _infoRow('Số thành viên:', '${members.length}/3'),
+                  const SizedBox(height: 8),
+                  _infoRow('Trạng thái đề tài:', currentGroup.thesisId != null ? 'Đã đăng ký đề tài' : 'Chưa đăng ký đề tài'),
+                  if (currentGroup.thesisId != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green.shade800, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Nhóm đã đăng ký đề tài thành công',
+                              style: TextStyle(
+                                color: Colors.green.shade800,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if (members.length >= 3) ...[
                     const SizedBox(height: 8),
                     Container(
@@ -300,8 +330,13 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                 backgroundColor: AppColors.primary,
                 textColor: Colors.white,
               ),
-              const SizedBox(height: 16),
-            ],
+              const SizedBox(height: 16),            ],            CustomButton(
+              text: currentGroup.thesisId != null ? 'Đã đăng ký đề tài' : 'Đăng ký đề tài',
+              onPressed: currentGroup.thesisId != null ? null : () => _navigateToThesisRegistration(context),
+              backgroundColor: currentGroup.thesisId != null ? Colors.grey : AppColors.accent,
+              textColor: Colors.white,
+            ),
+            const SizedBox(height: 16),
             CustomButton(
               text: 'Đổi tên nhóm',
               onPressed: () => _showEditGroupDialog(context),
@@ -557,9 +592,53 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                 Navigator.of(dialogContext).pop();
               },
             ),
-          ],
-        );
+          ],        );
       },
     );
+  }  void _navigateToThesisRegistration(BuildContext context) {
+    // Kiểm tra xem nhóm đã đăng ký đề tài hay chưa
+    if (currentGroup.thesisId != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nhóm này đã đăng ký đề tài rồi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Lấy user ID từ auth state
+    final authState = context.read<AuthBloc>().state;
+    String? currentUserId;
+    if (authState is Authenticated) {
+      currentUserId = authState.user['id']?.toString();
+    }
+
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể xác định thông tin người dùng'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (context) => ThesisRegistrationBloc(
+            thesisService: ThesisService(),
+          ),
+          child: ThesisListView(studentId: currentUserId!), // Safe to use ! here due to null check above
+        ),
+      ),
+    ).then((result) {
+      // Refresh group data nếu có thay đổi
+      if (result != null) {
+        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+      }
+    });
   }
 }

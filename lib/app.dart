@@ -5,6 +5,7 @@ import 'package:thesis_manage_project/repositories/auth_repository.dart';
 import 'package:thesis_manage_project/repositories/group_repository.dart';
 import 'package:thesis_manage_project/repositories/role_repository.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
+import 'package:thesis_manage_project/repositories/thesis_repository.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
@@ -42,6 +43,11 @@ class App extends StatelessWidget {
         // Profile Repository
         RepositoryProvider<ProfileRepository>(
           create: (context) => ProfileRepository(
+            apiService: context.read<ApiService>(),
+          ),        ),
+        // Thesis Repository
+        RepositoryProvider<ThesisRepository>(
+          create: (context) => ThesisRepository(
             apiService: context.read<ApiService>(),
           ),
         ),

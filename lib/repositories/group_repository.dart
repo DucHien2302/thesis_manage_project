@@ -5,14 +5,20 @@ class GroupRepository {
   final ApiService _apiService;
 
   GroupRepository({required ApiService apiService}) : _apiService = apiService;
-
   /// Create a new group
   Future<GroupModel> createGroup(String name) async {
-    final response = await _apiService.post(
-      '/group',
-      body: GroupCreateRequest(name: name).toJson(),
-    );
-    return GroupModel.fromJson(response);
+    try {
+      print('Debug: Sending create group request with name: $name');
+      final response = await _apiService.post(
+        '/group',
+        body: GroupCreateRequest(name: name).toJson(),
+      );
+      print('Debug: Create group response: $response');
+      return GroupModel.fromJson(response);
+    } catch (e) {
+      print('Debug: Error in createGroup: $e');
+      throw Exception('Không thể tạo nhóm: $e');
+    }
   }
 
   /// Get all groups that the current user is a member of
@@ -35,11 +41,17 @@ class GroupRepository {
   Future<void> removeGroupMember(String groupId, String memberId) async {
     await _apiService.delete('/group/$groupId/remove-member/$memberId');
   }
-
   /// Get group details with members
   Future<GroupModel> getGroupDetails(String groupId) async {
-    final response = await _apiService.get('/group/$groupId/members');
-    return GroupModel.fromJson(response);
+    try {
+      print('Debug: Getting group details for group ID: $groupId');
+      final response = await _apiService.get('/group/$groupId/members');
+      print('Debug: Group details response: $response');
+      return GroupModel.fromJson(response);
+    } catch (e) {
+      print('Debug: Error getting group details: $e');
+      throw Exception('Không thể lấy thông tin chi tiết nhóm: $e');
+    }
   }
 
   /// Transfer group leadership to another member
@@ -96,5 +108,19 @@ class GroupRepository {
   Future<AllInvitesResponse> getAllMyInvites() async {
     final response = await _apiService.get('/invite/all-my-invites');
     return AllInvitesResponse.fromJson(response);
+  }
+
+  /// Register thesis for group
+  /// API để nhóm trưởng đăng ký một đề tài cho nhóm của mình
+  Future<GroupModel> registerThesis(String groupId, String thesisId) async {
+    try {
+      print('Debug: Registering thesis $thesisId for group $groupId');
+      final response = await _apiService.post('/group/$groupId/register-thesis/$thesisId');
+      print('Debug: Register thesis response: $response');
+      return GroupModel.fromJson(response);
+    } catch (e) {
+      print('Debug: Error registering thesis: $e');
+      throw Exception('Không thể đăng ký đề tài: $e');
+    }
   }
 }
