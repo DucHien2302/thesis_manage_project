@@ -560,7 +560,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
     );
   }
-
   Widget _buildCurrentPage() {
     switch (_currentIndex) {
       case 0:
@@ -568,7 +567,14 @@ class _StudentDashboardState extends State<StudentDashboard> {
       case 1:
         return const GroupTab();
       case 2:
-        return const ThesisTab();
+        return BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, profileState) {
+            if (profileState is ProfileLoaded && profileState.studentProfile != null) {
+              return ThesisTab(student: profileState.studentProfile);
+            }
+            return const ThesisTab();
+          },
+        );
       case 3:
         return const TaskTab();
       case 4:

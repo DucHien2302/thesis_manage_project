@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:thesis_manage_project/models/group_models.dart';
 import 'package:thesis_manage_project/repositories/group_repository.dart';

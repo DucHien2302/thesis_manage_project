@@ -1,5 +1,6 @@
 class ApiConfig {
-  static const String baseUrl = 'http://10.0.2.2:8000'; // Thay đổi URL API khi cần
+  // static const String baseUrl = 'http://10.0.2.2:8000'; // Thay đổi URL API khi cần
+  static const String baseUrl = 'https://4ce9-2001-ee0-555b-d7a0-2d7e-dbd5-803d-eeac.ngrok-free.app'; // Thay đổi URL API khi cần
 
   // Auth APIs
   static const String login = '/auth/login';
