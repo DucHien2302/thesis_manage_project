@@ -58,19 +58,30 @@ class _StudentDashboardState extends State<StudentDashboard> {
       'title': 'Hồ sơ',
       'pageTitle': 'Hồ sơ',
     },
-  ];  @override
+  ];
+
+  @override
   void initState() {
     super.initState();
     // Load profile data after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      if (authState is Authenticated) {
+      _loadProfileData();
+    });
+  }
+
+  void _loadProfileData() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final userType = authState.user['user_type'] ?? 0;
+      final userId = authState.user['id'] ?? '';
+        // Only load if we're dealing with a student
+      if (userType == AppConfig.userTypeStudent) {
         context.read<ProfileBloc>().add(LoadProfile(
-          userType: authState.user['user_type'] ?? 0,
-          userId: authState.user['id'] ?? '',
+          userType: userType,
+          userId: userId,
         ));
       }
-    });
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -112,84 +123,197 @@ class _StudentDashboardState extends State<StudentDashboard> {
         );
       },
     );
-  }  @override
-  Widget build(BuildContext context) {
-    return Scaffold(      appBar: AppBar(
-        title: Text(_currentPageTitle),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+  }
+
+  void _showStudentQuickInfo(BuildContext context, dynamic studentProfile) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text('Thông tin sinh viên'),
+          ],
+        ),        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoRow('Họ tên', '${studentProfile.information.firstName} ${studentProfile.information.lastName}'),
+            _buildInfoRow('MSSV', studentProfile.studentInfo.studentCode),
+            _buildInfoRow('Lớp', studentProfile.studentInfo.className ?? 'Chưa cập nhật'),
+            _buildInfoRow('Ngành', studentProfile.studentInfo.majorName ?? 'Chưa cập nhật'),
+            _buildInfoRow('Điện thoại', studentProfile.information.telPhone.isNotEmpty ? studentProfile.information.telPhone : 'Chưa cập nhật'),
+            _buildInfoRow('Địa chỉ', studentProfile.information.address.isNotEmpty ? studentProfile.information.address : 'Chưa cập nhật'),
+          ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-            tooltip: 'Thông báo',
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _showLogoutDialog(context),
-            tooltip: 'Đăng xuất',
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _currentIndex = 5; // Navigate to profile page
+                _currentPageTitle = 'Hồ sơ';
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Xem chi tiết'),
           ),
         ],
       ),
-      drawer: _buildDrawer(),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _buildCurrentPage(),
-      ),floatingActionButton: _currentIndex == 0 
-          ? FloatingActionButton.extended(
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<ProfileBloc, ProfileState>(      listener: (context, state) {
+        // Log state changes for debugging
+        if (state is ProfileLoaded) {
+          print('[StudentDashboard] Profile loaded: ${state.studentProfile?.information.firstName} ${state.studentProfile?.information.lastName}');
+        } else if (state is ProfileError) {
+          print('[StudentDashboard] Profile error: ${state.message}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi tải thông tin: ${state.message}'),
+              backgroundColor: AppColors.error,
+              action: SnackBarAction(
+                label: 'Thử lại',
+                onPressed: _loadProfileData,
+              ),
+            ),
+          );
+        } else if (state is ProfileLoading) {
+          print('[StudentDashboard] Profile loading...');
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_currentPageTitle),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    title: const Text('Tạo mới'),
-                    content: const Text('Bạn muốn tạo gì?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Hủy'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Tính năng đang phát triển')),
-                          );
-                        },
-                        child: const Text('Tạo nhiệm vụ'),
-                      ),
-                    ],
-                  ),
-                );
+                // Refresh profile data when opening drawer
+                _loadProfileData();
+                Scaffold.of(context).openDrawer();
               },
-              icon: const Icon(Icons.add),              label: const Text('Tạo mới'),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            )
-          : null,
-    );  }
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () {
+                // TODO: Implement notifications
+              },
+              tooltip: 'Thông báo',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => _showLogoutDialog(context),
+              tooltip: 'Đăng xuất',
+            ),
+          ],
+        ),
+        drawer: _buildDrawer(),
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _buildCurrentPage(),
+        ),
+        floatingActionButton: _currentIndex == 0 
+            ? FloatingActionButton.extended(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      title: const Text('Tạo mới'),
+                      content: const Text('Bạn muốn tạo gì?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Hủy'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Tính năng đang phát triển')),
+                            );
+                          },
+                          child: const Text('Tạo nhiệm vụ'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Tạo mới'),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              )
+            : null,
+      ),
+    );
+  }
+  
   Widget _buildDrawer() {
     return Drawer(
       child: Column(
-        children: [          // Drawer Header với thông tin từ API
+        children: [
+          // Drawer Header với thông tin từ API
           BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, profileState) {
               return Container(
-                padding: const EdgeInsets.all(16),                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
                     begin: Alignment.topLeft,
@@ -197,75 +321,172 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ),
                 ),
                 child: SafeArea(
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 25,
-                        backgroundColor: Colors.white,                        child: Icon(
-                          Icons.school,
-                          size: 28,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                  child: GestureDetector(
+                    onLongPress: () {
+                      if (profileState is ProfileLoaded && profileState.studentProfile != null) {
+                        _showStudentQuickInfo(context, profileState.studentProfile!);
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            if (profileState is ProfileLoaded && profileState.studentProfile != null) ...[
-                              Text(
-                                '${profileState.studentProfile!.information.firstName} ${profileState.studentProfile!.information.lastName}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Colors.white,
+                              child: profileState is ProfileLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.school,
+                                      size: 32,
+                                      color: AppColors.primary,
+                                    ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (profileState is ProfileLoaded && profileState.studentProfile != null) ...[
+                                    Text(
+                                      '${profileState.studentProfile!.information.firstName} ${profileState.studentProfile!.information.lastName}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        'MSSV: ${profileState.studentProfile!.studentInfo.studentCode}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      profileState.studentProfile!.studentInfo.majorName ?? 'Chưa cập nhật ngành',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ] else if (profileState is ProfileLoading) ...[
+                                    const Text(
+                                      'Đang tải thông tin...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Vui lòng chờ',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ] else if (profileState is ProfileError) ...[
+                                    const Text(
+                                      'Lỗi tải thông tin',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Nhấn để thử lại',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    const Text(
+                                      'Sinh viên',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Chưa có thông tin',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'MSSV: ${profileState.studentProfile!.studentInfo.studentCode}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 1),
-                              Text(
-                                profileState.studentProfile!.studentInfo.majorName ?? 'Chưa cập nhật ngành',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ] else ...[
-                              const Text(
-                                'Sinh viên',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Đang tải thông tin...',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
-                      ),
-                    ],
+                        
+                        // Add a refresh button if there's an error
+                        if (profileState is ProfileError) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: TextButton.icon(
+                              onPressed: _loadProfileData,
+                              icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
+                              label: const Text(
+                                'Tải lại thông tin',
+                                style: TextStyle(color: Colors.white, fontSize: 14),
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        
+                        // Hint for long press
+                        if (profileState is ProfileLoaded && profileState.studentProfile != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Nhấn giữ để xem thông tin chi tiết',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.7),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -283,24 +504,28 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 final isSelected = index == _currentIndex;
                 
                 return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),                  decoration: BoxDecoration(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
                   ),
                   child: ListTile(
                     dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),                    leading: Icon(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    leading: Icon(
                       isSelected ? item['activeIcon'] : item['icon'],
                       size: 22,
                       color: isSelected ? AppColors.primary : Colors.grey[600],
                     ),
                     title: Text(
-                      item['title'],                      style: TextStyle(
+                      item['title'],
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         color: isSelected ? AppColors.primary : Colors.grey[800],
                       ),
-                    ),                    onTap: () {
+                    ),
+                    onTap: () {
                       setState(() {
                         _currentIndex = index;
                         _currentPageTitle = item['pageTitle'];
@@ -335,6 +560,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
     );
   }
+
   Widget _buildCurrentPage() {
     switch (_currentIndex) {
       case 0:
