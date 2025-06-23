@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/screens/thesis_registration/thesis_registration.dart';
 import 'package:thesis_manage_project/services/thesis_service.dart';
+import 'package:thesis_manage_project/services/thesis_statistics_service.dart';
 import 'package:thesis_manage_project/widgets/modern_card.dart';
 import 'package:thesis_manage_project/models/profile_models.dart';
 
@@ -210,8 +211,6 @@ class ThesisTab extends StatelessWidget {
               Text('1. Tìm kiếm đề tài phù hợp với chuyên ngành'),
               Text('2. Xem chi tiết thông tin đề tài'),
               Text('3. Đăng ký đề tài (có thể thêm ghi chú)'),
-              Text('4. Chờ giảng viên duyệt đơn đăng ký'),
-              Text('5. Nhận thông báo kết quả'),
               SizedBox(height: 12),
               Text(
                 'Lưu ý:',
@@ -219,8 +218,6 @@ class ThesisTab extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text('• Mỗi sinh viên chỉ có thể đăng ký một đề tài'),
-              Text('• Có thể hủy đăng ký khi đang chờ duyệt'),
-              Text('• Liên hệ giảng viên nếu có thắc mắc'),
             ],
           ),
         ),
@@ -233,40 +230,113 @@ class ThesisTab extends StatelessWidget {
       ),
     );
   }
-
   void _showStatsDialog(BuildContext context) {
+    final statisticsService = ThesisStatisticsService();
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thống kê đề tài'),
-        content: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Thông tin tổng quan:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('📊 Tổng số đề tài: Đang tải...'),
-            Text('✅ Đề tài đang mở: Đang tải...'),
-            Text('👥 Đề tài còn slot: Đang tải...'),
-            SizedBox(height: 12),
-            Text(
-              'Chức năng này sẽ được cập nhật để hiển thị thống kê chi tiết.',
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: Colors.grey,
+      builder: (context) => FutureBuilder<ThesisStatisticsModel>(
+        future: statisticsService.calculateStatistics(),
+        builder: (context, snapshot) {
+          // Hiển thị thông báo đang tải khi đang lấy dữ liệu
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return AlertDialog(
+              title: const Text('Thống kê đề tài'),
+              content: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Thông tin tổng quan:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Center(child: CircularProgressIndicator()),
+                  SizedBox(height: 12),
+                  Text('Đang tải dữ liệu...', textAlign: TextAlign.center),
+                ],
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Đóng'),
+                ),
+              ],
+            );
+          }
+          
+          // Hiển thị thông báo lỗi nếu có lỗi xảy ra
+          if (snapshot.hasError) {
+            return AlertDialog(
+              title: const Text('Thống kê đề tài'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Thông tin tổng quan:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Không thể tải dữ liệu: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Đóng'),
+                ),
+              ],
+            );
+          }
+          
+          // Lấy dữ liệu từ kết quả
+          final stats = snapshot.data ?? 
+              ThesisStatisticsModel(totalTheses: 0, openTheses: 0, availableSlotTheses: 0);
+          
+          // Hiển thị thông tin thống kê
+          return AlertDialog(
+            title: const Text('Thống kê đề tài'),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Thông tin tổng quan:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text('📊 Tổng số đề tài: ${stats.totalTheses}'),
+                Text('✅ Đề tài đang mở: ${stats.openTheses}'),
+                Text('👥 Đề tài còn slot: ${stats.availableSlotTheses}'),
+                const SizedBox(height: 12),
+                const Text(
+                  'Dữ liệu được cập nhật theo thời gian thực.',
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Đóng'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Đóng'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showStatsDialog(context); // Refresh data
+                },
+                child: const Text('Làm mới'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

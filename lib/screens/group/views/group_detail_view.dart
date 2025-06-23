@@ -23,7 +23,6 @@ class GroupDetailView extends StatefulWidget {
 class _GroupDetailViewState extends State<GroupDetailView> {
   late GroupModel currentGroup;
   bool _isTransferringLeadership = false;
-
   @override
   void initState() {
     super.initState();
@@ -31,7 +30,8 @@ class _GroupDetailViewState extends State<GroupDetailView> {
     // Load group members when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+        // Lấy thông tin chi tiết nhóm để cập nhật đầy đủ, bao gồm thông tin đề tài
+        context.read<GroupBloc>().add(GetGroupDetailsEvent(groupId: currentGroup.id));
       }
     });
   }
@@ -58,10 +58,9 @@ class _GroupDetailViewState extends State<GroupDetailView> {
         String? currentUserId;
         if (authState is Authenticated) {
           currentUserId = authState.user['id']?.toString();
-        }
-
-        return WillPopScope(
+        }        return WillPopScope(
           onWillPop: () async {
+            // Cập nhật danh sách nhóm khi quay lại
             context.read<GroupBloc>().add(GetMyGroupsEvent());
             return true;
           },
@@ -113,20 +112,38 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                   _isTransferringLeadership = false;
                   if (mounted) {
                     Navigator.pop(context);
-                  }
-                } else if (state is GroupNameUpdatedState) {
+                  }                } else if (state is GroupNameUpdatedState) {
                   setState(() {
+                    // Giữ nguyên thông tin về đề tài khi cập nhật tên nhóm
+                    final thesisId = currentGroup.thesisId;
                     currentGroup = state.updatedGroup;
+                    // Đảm bảo thông tin đề tài không bị mất khi cập nhật từ state
+                    if (thesisId != null && currentGroup.thesisId == null) {
+                      currentGroup = currentGroup.copyWith(thesisId: thesisId);
+                    }
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Đã cập nhật tên nhóm')),
                   );
                   // Load complete group details after name update
-                  context.read<GroupBloc>().add(GetGroupDetailsEvent(groupId: currentGroup.id));
-                } else if (state is GroupDetailsLoadedState) {
+                  context.read<GroupBloc>().add(GetGroupDetailsEvent(groupId: currentGroup.id));                } else if (state is GroupDetailsLoadedState) {
                   setState(() {
+                    // Cập nhật thông tin nhóm từ kết quả API
                     currentGroup = state.group;
+                    print("Debug: Updated group details, thesis_id: ${currentGroup.thesisId}");
                   });
+                  // Sau khi cập nhật thông tin nhóm, lấy danh sách thành viên
+                  context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+                } else if (state is ThesisRegisteredState) {
+                  setState(() {
+                    currentGroup = state.updatedGroup;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Đăng ký đề tài thành công!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                   context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
                 } else if (state is GroupDissolvedState) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -134,9 +151,11 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                   );
                   Navigator.pop(context);
                 }
-              },
-              child: BlocBuilder<GroupBloc, GroupState>(
+              },              child: BlocBuilder<GroupBloc, GroupState>(
                 builder: (context, state) {
+                  // Debug thông tin state hiện tại
+                  print("Debug: Current state: ${state.runtimeType}, thesis_id: ${currentGroup.thesisId}");
+                  
                   if (state is GroupMembersLoadedState) {
                     if (!_isCurrentUserMember(state.members, currentUserId)) {
                       return _buildNotMemberView();
@@ -232,8 +251,10 @@ class _GroupDetailViewState extends State<GroupDetailView> {
       ),
     );
   }
-
   Widget _buildGroupDetails(List<MemberDetailModel> members, String? currentUserId) {
+    // Debug thông tin nhóm để xác nhận
+    print("Debug: Building group details, thesis_id: ${currentGroup.thesisId}");
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -639,11 +660,11 @@ class _GroupDetailViewState extends State<GroupDetailView> {
           ),
           child: ThesisListView(studentId: currentUserId!), // Safe to use ! here due to null check above
         ),
-      ),
-    ).then((result) {
+      ),    ).then((result) {
       // Refresh group data nếu có thay đổi
       if (result != null) {
-        context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
+        // Lấy thông tin đầy đủ của nhóm sau khi đăng ký đề tài
+        context.read<GroupBloc>().add(GetGroupDetailsEvent(groupId: currentGroup.id));
       }
     });
   }
