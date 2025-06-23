@@ -5,10 +5,11 @@ import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/profile_screen.dart';
 import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/lecturer_overview_tab.dart';
-import 'package:thesis_manage_project/screens/lecturer/views/lecturer_thesis_tab.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/lecturer_student_tab.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/lecturer_council_tab.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/lecturer_grading_tab.dart';
+
+import 'views/lecturer_thesis_tab.dart';
 
 /// Lecturer Dashboard - Giao diện dành cho Giảng viên
 class LecturerDashboard extends StatefulWidget {
