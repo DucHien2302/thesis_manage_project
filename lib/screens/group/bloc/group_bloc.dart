@@ -63,6 +63,15 @@ class GetGroupMembersEvent extends GroupEvent {
   List<Object?> get props => [groupId];
 }
 
+class GetGroupDetailsEvent extends GroupEvent {
+  final String groupId;
+
+  const GetGroupDetailsEvent({required this.groupId});
+
+  @override
+  List<Object?> get props => [groupId];
+}
+
 class TransferGroupLeadershipEvent extends GroupEvent {
   final String groupId;
   final String newLeaderId;
@@ -209,6 +218,15 @@ class GroupMembersLoadedState extends GroupState {
   List<Object?> get props => [members];
 }
 
+class GroupDetailsLoadedState extends GroupState {
+  final GroupModel group;
+
+  const GroupDetailsLoadedState({required this.group});
+
+  @override
+  List<Object?> get props => [group];
+}
+
 class LeadershipTransferredState extends GroupState {}
 
 class InviteSentState extends GroupState {}
@@ -278,14 +296,14 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     on<AddGroupMemberEvent>(_onAddGroupMember);
     on<RemoveGroupMemberEvent>(_onRemoveGroupMember);
     on<GetGroupMembersEvent>(_onGetGroupMembers);
-    on<TransferGroupLeadershipEvent>(_onTransferGroupLeadership);
+    on<GetGroupDetailsEvent>(_onGetGroupDetails);
+    on<UpdateGroupNameEvent>(_onUpdateGroupName);
+    on<DissolveGroupEvent>(_onDissolveGroup);
+    on<RegisterThesisEvent>(_onRegisterThesis);
     on<SendInviteEvent>(_onSendInvite);
     on<GetMyInvitesEvent>(_onGetMyInvites);
     on<AcceptInviteEvent>(_onAcceptInvite);
     on<RejectInviteEvent>(_onRejectInvite);    on<RevokeInviteEvent>(_onRevokeInvite);
-    on<UpdateGroupNameEvent>(_onUpdateGroupName);
-    on<DissolveGroupEvent>(_onDissolveGroup);
-    on<RegisterThesisEvent>(_onRegisterThesis);
   }  Future<void> _onGetMyGroups(GetMyGroupsEvent event, Emitter<GroupState> emit) async {
     // Prevent multiple concurrent requests
     if (_isFetching) return;
@@ -371,6 +389,16 @@ class GroupBloc extends Bloc<GroupEvent, GroupState> {
     try {
       final groupDetails = await groupRepository.getGroupDetails(event.groupId);
       emit(GroupMembersLoadedState(members: groupDetails.members));
+    } catch (e) {
+      emit(GroupErrorState(error: e.toString()));
+    }
+  }
+
+  Future<void> _onGetGroupDetails(GetGroupDetailsEvent event, Emitter<GroupState> emit) async {
+    emit(GroupLoadingState());
+    try {
+      final groupDetails = await groupRepository.getGroupDetails(event.groupId);
+      emit(GroupDetailsLoadedState(group: groupDetails));
     } catch (e) {
       emit(GroupErrorState(error: e.toString()));
     }
