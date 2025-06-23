@@ -20,9 +20,25 @@ class GroupModel extends Equatable {
     this.thesisId,
     this.members = const [],
   });
-
   factory GroupModel.fromJson(Map<String, dynamic> json) => _$GroupModelFromJson(json);
   Map<String, dynamic> toJson() => _$GroupModelToJson(this);
+
+  // Thêm phương thức copyWith để dễ dàng tạo bản sao với một số thuộc tính được cập nhật
+  GroupModel copyWith({
+    String? id,
+    String? name,
+    String? leaderId,
+    String? thesisId,
+    List<MemberDetailModel>? members,
+  }) {
+    return GroupModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      leaderId: leaderId ?? this.leaderId,
+      thesisId: thesisId ?? this.thesisId,
+      members: members ?? this.members,
+    );
+  }
 
   @override
   List<Object?> get props => [id, name, leaderId, thesisId, members];
