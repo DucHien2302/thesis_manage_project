@@ -15,6 +15,7 @@ class LecturerThesisBloc extends Bloc<LecturerThesisEvent, LecturerThesisState> 
     on<LoadLecturerTheses>(_onLoadLecturerTheses);
     on<RefreshLecturerTheses>(_onRefreshLecturerTheses);
     on<FilterLecturerTheses>(_onFilterLecturerTheses);
+    on<CreateThesis>(_onCreateThesis);
   }
 
   Future<void> _onLoadLecturerTheses(
@@ -84,6 +85,21 @@ class LecturerThesisBloc extends Bloc<LecturerThesisEvent, LecturerThesisState> 
       }
 
       emit(currentState.copyWith(filteredTheses: filteredTheses));
+    }
+  }
+
+  Future<void> _onCreateThesis(
+    CreateThesis event,
+    Emitter<LecturerThesisState> emit,
+  ) async {
+    emit(LecturerThesisCreating());
+    try {
+      final thesis = await _repository.createThesis(event.thesisRequest.toJson());
+      emit(LecturerThesisCreated(thesis: thesis));
+      // Reload the thesis list
+      add(const LoadLecturerTheses());
+    } catch (e) {
+      emit(LecturerThesisError(message: e.toString()));
     }
   }
 }

@@ -42,3 +42,14 @@ class LecturerThesisError extends LecturerThesisState {
   @override
   List<Object> get props => [message];
 }
+
+class LecturerThesisCreating extends LecturerThesisState {}
+
+class LecturerThesisCreated extends LecturerThesisState {
+  final ThesisModel thesis;
+
+  const LecturerThesisCreated({required this.thesis});
+
+  @override
+  List<Object> get props => [thesis];
+}

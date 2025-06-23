@@ -9,7 +9,7 @@ import 'package:thesis_manage_project/screens/lecturer/views/lecturer_student_ta
 import 'package:thesis_manage_project/screens/lecturer/views/lecturer_council_tab.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/lecturer_grading_tab.dart';
 
-import 'views/lecturer_thesis_tab_new.dart';
+import 'views/lecturer_thesis_tab.dart';
 
 /// Lecturer Dashboard - Giao diện dành cho Giảng viên
 class LecturerDashboard extends StatefulWidget {

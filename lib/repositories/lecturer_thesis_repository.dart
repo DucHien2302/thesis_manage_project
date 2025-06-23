@@ -51,13 +51,15 @@ class LecturerThesisRepository {
     } catch (e) {
       throw Exception('Không thể lấy thống kê đề tài: $e');
     }
-  }
-  /// Create a new thesis
+  }  /// Create a new thesis
   Future<ThesisModel> createThesis(Map<String, dynamic> thesisData) async {
     try {
+      print('🔗 POST /theses/ with data: $thesisData');
       final response = await _apiService.post('/theses/', body: thesisData);
+      print('✅ Response success: $response');
       return ThesisModel.fromJson(response);
     } catch (e) {
+      print('❌ Create thesis error: $e');
       throw Exception('Không thể tạo đề tài mới: $e');
     }
   }
