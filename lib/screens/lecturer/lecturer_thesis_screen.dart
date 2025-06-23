@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/screens/lecturer/bloc/lecturer_thesis_bloc.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/thesis_management_view.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/thesis_overview_view.dart';
+import 'package:thesis_manage_project/screens/lecturer/views/thesis_approval_screen.dart';
 import 'package:thesis_manage_project/repositories/lecturer_thesis_repository.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/config/constants.dart';
@@ -16,11 +17,10 @@ class LecturerThesisScreen extends StatefulWidget {
 
 class _LecturerThesisScreenState extends State<LecturerThesisScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  @override
+  late TabController _tabController;  @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     
     // Listen to tab changes
     _tabController.addListener(_onTabChanged);
@@ -78,6 +78,9 @@ class _LecturerThesisScreenState extends State<LecturerThesisScreen>
               Tab(
                 icon: Icon(Icons.assignment_outlined),
                 text: 'Quản lý đề tài',
+              ),              Tab(
+                icon: Icon(Icons.check_circle_outline),
+                text: 'Duyệt đề tài',
               ),
             ],
           ),
@@ -86,6 +89,7 @@ class _LecturerThesisScreenState extends State<LecturerThesisScreen>
           children: [
             ThesisOverviewView(tabController: _tabController),
             const ThesisManagementView(),
+            const ThesisApprovalScreen(),
           ],
         ),
       ),

@@ -22,6 +22,7 @@ class AppRoutes {
   static const lecturerDashboard = '/lecturer-dashboard';
   static const studentDashboard = '/student-dashboard';
   static const lecturerThesis = '/lecturer-thesis';
+  static const lecturerThesisDetail = '/lecturer-thesis-detail';
   static const createThesis = '/lecturer/create-thesis';
 }
 

@@ -4,6 +4,7 @@ import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/screens/lecturer/bloc/lecturer_thesis_bloc.dart';
 import 'package:thesis_manage_project/models/thesis_models.dart';
 import 'package:thesis_manage_project/screens/lecturer/views/create_thesis_screen.dart';
+import 'package:thesis_manage_project/screens/lecturer/views/lecturer_thesis_detail_screen.dart';
 
 class ThesisManagementView extends StatefulWidget {
   const ThesisManagementView({super.key});
@@ -336,28 +337,28 @@ class _ThesisManagementViewState extends State<ThesisManagementView> {
       ),
     );
   }
-
   Widget _buildThesisCard(ThesisModel thesis) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title and status
-            Row(
+    return GestureDetector(
+      onTap: () => _viewThesisDetail(thesis),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title and status
+              Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
@@ -385,12 +386,12 @@ class _ThesisManagementViewState extends State<ThesisManagementView> {
               ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
+            ),            const SizedBox(height: 16),
             
             // Details
             Row(
-              children: [                _buildDetailItem(
+              children: [
+                _buildDetailItem(
                   Icons.calendar_today_outlined,
                   'Ngày bắt đầu',
                   _formatDate(thesis.startDate ?? ''),
@@ -411,7 +412,7 @@ class _ThesisManagementViewState extends State<ThesisManagementView> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      // Navigate to thesis detail
+                      _viewThesisDetail(thesis);
                     },
                     icon: const Icon(Icons.visibility_outlined, size: 18),
                     label: const Text('Xem chi tiết'),
@@ -445,7 +446,8 @@ class _ThesisManagementViewState extends State<ThesisManagementView> {
                 ),
               ],
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -516,6 +518,17 @@ class _ThesisManagementViewState extends State<ThesisManagementView> {
           ],
         ),
       ],
+    );
+  }
+
+  void _viewThesisDetail(ThesisModel thesis) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LecturerThesisDetailScreen(
+          thesis: thesis,
+        ),
+      ),
     );
   }
 
