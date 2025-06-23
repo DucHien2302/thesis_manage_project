@@ -60,21 +60,23 @@ ThesisUpdateData _$ThesisUpdateDataFromJson(Map<String, dynamic> json) =>
       departmentId: (json['department_id'] as num?)?.toInt(),
     );
 
-Map<String, dynamic> _$ThesisUpdateDataToJson(ThesisUpdateData instance) =>
-    <String, dynamic>{
-      'title': instance.title,
-      'description': instance.description,
-      'thesis_type': instance.thesisType,
-      'start_date': instance.startDate?.toIso8601String(),
-      'end_date': instance.endDate?.toIso8601String(),
-      'status': instance.status,
-      'batch_id': instance.batchId,
-      'major_id': instance.majorId,
-      'lecturer_ids': instance.lecturerIds,
-      'reviewer_ids': instance.reviewerIds,
-      'reason': instance.reason,
-      'department_id': instance.departmentId,
-    };
+Map<String, dynamic> _$ThesisUpdateDataToJson(
+  ThesisUpdateData instance,
+) => <String, dynamic>{
+  if (instance.title case final value?) 'title': value,
+  if (instance.description case final value?) 'description': value,
+  if (instance.thesisType case final value?) 'thesis_type': value,
+  if (instance.startDate?.toIso8601String() case final value?)
+    'start_date': value,
+  if (instance.endDate?.toIso8601String() case final value?) 'end_date': value,
+  if (instance.status case final value?) 'status': value,
+  if (instance.batchId case final value?) 'batch_id': value,
+  if (instance.majorId case final value?) 'major_id': value,
+  if (instance.lecturerIds case final value?) 'lecturer_ids': value,
+  if (instance.reviewerIds case final value?) 'reviewer_ids': value,
+  if (instance.reason case final value?) 'reason': value,
+  if (instance.departmentId case final value?) 'department_id': value,
+};
 
 ThesisBatchUpdateResponse _$ThesisBatchUpdateResponseFromJson(
   Map<String, dynamic> json,
