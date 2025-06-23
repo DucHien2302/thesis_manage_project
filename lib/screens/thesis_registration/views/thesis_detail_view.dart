@@ -4,6 +4,7 @@ import 'package:thesis_manage_project/config/constants.dart';
 import 'package:thesis_manage_project/models/thesis_models.dart';
 import 'package:thesis_manage_project/screens/thesis_registration/blocs/thesis_registration_bloc.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
+import 'package:thesis_manage_project/widgets/thesis_detail_common.dart';
 
 class ThesisDetailView extends StatefulWidget {
   final ThesisModel thesis;
@@ -39,237 +40,52 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
     context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
     _notesController.dispose();
     super.dispose();
-  }@override
+  }  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chi tiết đề tài'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Pop and trigger reload
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimens.marginMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatusCard(),
-            const SizedBox(height: AppDimens.marginMedium),
-            _buildBasicInfoCard(),
-            const SizedBox(height: AppDimens.marginMedium),
-            _buildDescriptionCard(),
-            const SizedBox(height: AppDimens.marginMedium),
-            _buildLecturerInfoCard(),
-            const SizedBox(height: AppDimens.marginMedium),
-            _buildRegistrationInfoCard(),            const SizedBox(height: AppDimens.marginLarge),
-            BlocBuilder<ThesisRegistrationBloc, ThesisRegistrationState>(
-              builder: (context, state) {
-                bool userHasRegisteredThesis = false;
-                
-                // Kiểm tra từ state GroupsLoaded xem có nhóm nào đã đăng ký đề tài chưa
-                if (state is GroupsLoaded) {
-                  final authState = context.read<AuthBloc>().state;
-                  if (authState is Authenticated) {
-                    final currentUserId = authState.user['id']?.toString();
-                    final userGroups = state.groups.where((group) => group.leaderId == currentUserId).toList();
-                    userHasRegisteredThesis = userGroups.any((group) => group.thesisId != null && group.thesisId!.isNotEmpty);
-                  }
-                }
-                
-                if (widget.thesis.isRegistrationOpen && !userHasRegisteredThesis) {
-                  return _buildRegisterButton();
-                } else if (userHasRegisteredThesis) {
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: null,
-                      icon: const Icon(Icons.block),
-                      label: const Text('Bạn đã đăng ký đề tài khác'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: AppDimens.marginMedium),
-                      ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildStatusCard() {
-    Color statusColor;
-    IconData statusIcon;
-    String statusText;
-    String statusDescription;
-
-    if (!widget.thesis.isRegistrationOpen) {
-      statusColor = AppColors.textDisabled;
-      statusIcon = Icons.lock;
-      statusText = 'Đã đóng đăng ký';
-      statusDescription = 'Đề tài này hiện không mở đăng ký';
-    } else {
-      statusColor = AppColors.success;
-      statusIcon = Icons.check_circle;
-      statusText = 'Đang mở đăng ký';
-      statusDescription = 'Bạn có thể đăng ký đề tài này';
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.marginMedium),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimens.marginRegular),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-              ),
-              child: Icon(
-                statusIcon,
-                color: statusColor,
-                size: 32,
-              ),
-            ),
-            const SizedBox(width: AppDimens.marginMedium),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    statusText,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.marginSmall),
-                  Text(
-                    statusDescription,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ThesisDetailCommon(
+      thesis: widget.thesis,
+      isLecturerView: false,
+      actionButtons: _buildStudentActionButtons(),
     );
   }
 
-  Widget _buildBasicInfoCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.marginMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Thông tin cơ bản',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+  Widget _buildStudentActionButtons() {
+    return BlocBuilder<ThesisRegistrationBloc, ThesisRegistrationState>(
+      builder: (context, state) {
+        bool userHasRegisteredThesis = false;
+        
+        // Kiểm tra từ state GroupsLoaded xem có nhóm nào đã đăng ký đề tài chưa
+        if (state is GroupsLoaded) {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is Authenticated) {
+            final currentUserId = authState.user['id']?.toString();
+            final userGroups = state.groups.where((group) => group.leaderId == currentUserId).toList();
+            userHasRegisteredThesis = userGroups.any((group) => group.thesisId != null && group.thesisId!.isNotEmpty);
+          }
+        }
+        
+        if (widget.thesis.isRegistrationOpen && !userHasRegisteredThesis) {
+          return _buildRegisterButton();
+        } else if (userHasRegisteredThesis) {
+          return SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.block),
+              label: const Text('Bạn đã đăng ký đề tài khác'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: AppDimens.marginMedium),
               ),
             ),
-            const SizedBox(height: AppDimens.marginMedium),
-            Text(
-              widget.thesis.title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: AppDimens.marginMedium),            _buildInfoRow(
-              Icons.category,
-              'Loại đề tài',
-              widget.thesis.thesisTypeName,
-            ),
-            const SizedBox(height: AppDimens.marginRegular),
-            _buildInfoRow(
-              Icons.school,
-              'Chuyên ngành',
-              widget.thesis.major,
-            ),
-            const SizedBox(height: AppDimens.marginRegular),
-            _buildInfoRow(
-              Icons.info,
-              'Trạng thái',
-              widget.thesis.status,
-            ),
-          ],
-        ),
-      ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
-  }
-
-  Widget _buildDescriptionCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.marginMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Mô tả đề tài',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppDimens.marginMedium),
-            Text(
-              widget.thesis.description,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: AppColors.textSecondary,
-        ),
-        const SizedBox(width: AppDimens.marginRegular),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-  Widget _buildRegisterButton() {
+  }  Widget _buildRegisterButton() {
     return SizedBox(
-      width: double.infinity,      child: ElevatedButton.icon(
+      width: double.infinity,
+      child: ElevatedButton.icon(
         onPressed: _showRegisterDialog,
         icon: const Icon(Icons.add),
         label: const Text('Đăng ký đề tài'),
@@ -278,8 +94,7 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
         ),
       ),
     );
-  }
-  void _showRegisterDialog() {
+  }  void _showRegisterDialog() {
     // Load groups first
     context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
     
@@ -453,7 +268,7 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
       context: context,
       builder: (confirmContext) => AlertDialog(
         title: const Text('Xác nhận đăng ký'),
-        content: Text('Bạn có chắc chắn muốn đăng ký đề tài "${widget.thesis.title}" cho nhóm này?'),
+        content: Text('Bạn có chắc chắn muốn đăng ký đề tài "${widget.thesis.name}" cho nhóm này?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(confirmContext),
@@ -479,144 +294,5 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
         ],
       ),
     );
-  }
-
-  Widget _buildLecturerInfoCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.marginMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Thông tin giảng viên hướng dẫn',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppDimens.marginMedium),
-            if (widget.thesis.instructors.isNotEmpty) ...[
-              ...widget.thesis.instructors.map((instructor) => Padding(
-                padding: const EdgeInsets.only(bottom: AppDimens.marginRegular),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppDimens.marginRegular),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(AppDimens.radiusRegular),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimens.marginMedium),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            instructor.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimens.marginSmall),
-                          Text(
-                            instructor.email,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            'Mã giảng viên: ${instructor.lecturerCode}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          if (instructor.departmentName != null)
-                            Text(
-                              'Khoa: ${instructor.departmentName}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )).toList(),
-            ] else ...[
-              const Text('Chưa có thông tin giảng viên hướng dẫn'),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegistrationInfoCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.marginMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Thông tin đề tài',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppDimens.marginMedium),
-            if (widget.thesis.startDate != null && widget.thesis.endDate != null) ...[
-              _buildInfoRow(
-                Icons.calendar_today,
-                'Thời gian thực hiện',
-                '${_formatDate(widget.thesis.startDate!)} - ${_formatDate(widget.thesis.endDate!)}',
-              ),
-              const SizedBox(height: AppDimens.marginRegular),
-            ],
-            _buildInfoRow(
-              Icons.business,
-              'Batch',
-              widget.thesis.batch.name,
-            ),
-            const SizedBox(height: AppDimens.marginRegular),
-            _buildInfoRow(
-              Icons.school,
-              'Học kỳ',
-              widget.thesis.batch.semester.name,
-            ),
-            const SizedBox(height: AppDimens.marginRegular),
-            if (widget.thesis.department != null) ...[
-              _buildInfoRow(
-                Icons.business,
-                'Khoa',
-                widget.thesis.department!.name,
-              ),
-              const SizedBox(height: AppDimens.marginRegular),
-            ],
-            _buildInfoRow(
-              Icons.info,
-              'Trạng thái',
-              widget.thesis.status,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    } catch (e) {
-      return dateString;
-    }
   }
 }
