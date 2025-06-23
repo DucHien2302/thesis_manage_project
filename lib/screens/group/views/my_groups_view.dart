@@ -196,18 +196,28 @@ class _MyGroupsViewState extends State<MyGroupsView>
         ),
       ),
     );
-  }
-  Widget _buildGroupsList(List<GroupModel> groups) {
+  }  Widget _buildGroupsList(List<GroupModel> groups) {
     // Get current user id from AuthBloc
     final authState = context.watch<AuthBloc>().state;
     String? currentUserId;
 
     if (authState is Authenticated) {
       currentUserId = authState.user['id']?.toString();
-    }    // Filter groups where current user is still a member
+    }
+    
+    // Check if user is a member or the leader of the group
     final filteredGroups = groups.where((group) {
       if (currentUserId == null) return false;
-      return group.members.any((member) => member.userId == currentUserId);
+      
+      // Check if user is the leader of the group
+      if (group.leaderId == currentUserId) return true;
+      
+      // If members list exists, check if user is a member
+      if (group.members.isNotEmpty) {
+        return group.members.any((member) => member.userId == currentUserId);
+      }
+      
+      return false;
     }).toList();
 
     // If after filtering, no groups remain, show empty message
@@ -231,8 +241,9 @@ class _MyGroupsViewState extends State<MyGroupsView>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
             ),
-            child: InkWell(
-              onTap: () {
+            child: InkWell(              onTap: () {
+                // Store the bloc reference before navigation
+                final groupBloc = context.read<GroupBloc>();
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -240,7 +251,10 @@ class _MyGroupsViewState extends State<MyGroupsView>
                   ),
                 ).then((_) {
                   // Refresh the groups list when returning from details page
-                  context.read<GroupBloc>().add(GetMyGroupsEvent());
+                  // Use the stored bloc reference instead of looking it up from context
+                  if (mounted) {
+                    groupBloc.add(GetMyGroupsEvent());
+                  }
                 });
               },
               borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
