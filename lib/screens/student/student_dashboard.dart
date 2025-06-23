@@ -7,7 +7,6 @@ import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
 import 'package:thesis_manage_project/screens/student/views/overview_tab.dart';
 import 'package:thesis_manage_project/screens/student/views/group_tab.dart';
 import 'package:thesis_manage_project/screens/student/views/thesis_tab.dart';
-import 'package:thesis_manage_project/screens/student/views/task_tab.dart';
 import 'package:thesis_manage_project/screens/student/views/progress_tab.dart';
 
 class StudentDashboard extends StatefulWidget {
@@ -20,7 +19,6 @@ class StudentDashboard extends StatefulWidget {
 class _StudentDashboardState extends State<StudentDashboard> {
   int _currentIndex = 0;
   String _currentPageTitle = 'Tổng quan';
-
   final List<Map<String, dynamic>> _menuItems = [
     {
       'icon': Icons.dashboard_outlined,
@@ -39,12 +37,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
       'activeIcon': Icons.assignment,
       'title': 'Đề tài',
       'pageTitle': 'Đề tài',
-    },
-    {
-      'icon': Icons.task_outlined,
-      'activeIcon': Icons.task,
-      'title': 'Nhiệm vụ',
-      'pageTitle': 'Nhiệm vụ',
     },
     {
       'icon': Icons.bar_chart_outlined,
@@ -559,8 +551,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
         ],
       ),
     );
-  }
-  Widget _buildCurrentPage() {
+  }  Widget _buildCurrentPage() {
     switch (_currentIndex) {
       case 0:
         return const OverviewTab();
@@ -576,10 +567,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
           },
         );
       case 3:
-        return const TaskTab();
-      case 4:
         return const ProgressTab();
-      case 5:
+      case 4:
         return const ProfileScreen();
       default:
         return const OverviewTab();
