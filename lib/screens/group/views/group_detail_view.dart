@@ -121,6 +121,12 @@ class _GroupDetailViewState extends State<GroupDetailView> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Đã cập nhật tên nhóm')),
                   );
+                  // Load complete group details after name update
+                  context.read<GroupBloc>().add(GetGroupDetailsEvent(groupId: currentGroup.id));
+                } else if (state is GroupDetailsLoadedState) {
+                  setState(() {
+                    currentGroup = state.group;
+                  });
                   context.read<GroupBloc>().add(GetGroupMembersEvent(groupId: currentGroup.id));
                 } else if (state is GroupDissolvedState) {
                   ScaffoldMessenger.of(context).showSnackBar(

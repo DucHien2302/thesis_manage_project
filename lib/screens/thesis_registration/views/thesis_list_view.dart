@@ -136,10 +136,9 @@ class _ThesisListViewState extends State<ThesisListView> {  @override
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
+        borderRadius: BorderRadius.circular(12),        onTap: () async {
           final bloc = context.read<ThesisRegistrationBloc>();
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => BlocProvider.value(
@@ -151,6 +150,9 @@ class _ThesisListViewState extends State<ThesisListView> {  @override
               ),
             ),
           );
+          
+          // Reload theses when returning from detail view
+          _onRefresh();
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
