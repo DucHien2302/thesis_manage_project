@@ -56,6 +56,7 @@ class _ThesisApprovalDetailViewState extends State<_ThesisApprovalDetailView> {
   }
 
   void _showApprovalDialog() {
+    final bloc = BlocProvider.of<ThesisApprovalBloc>(context, listen: false);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -90,13 +91,10 @@ class _ThesisApprovalDetailViewState extends State<_ThesisApprovalDetailView> {
                   ? ThesisStatus.departmentApproved
                   : ThesisStatus.facultyApproved;
               
-              context.read<ThesisApprovalBloc>().add(
+              bloc.add(
                 ApproveThesis(
                   thesisId: widget.thesis.id,
                   newStatus: newStatus,
-                  reason: _reasonController.text.trim().isEmpty 
-                      ? null 
-                      : _reasonController.text.trim(),
                 ),
               );
             },
@@ -112,6 +110,7 @@ class _ThesisApprovalDetailViewState extends State<_ThesisApprovalDetailView> {
   }
 
   void _showRejectDialog() {
+    final bloc = BlocProvider.of<ThesisApprovalBloc>(context, listen: false);
     final TextEditingController rejectReasonController = TextEditingController();
 
     showDialog(
@@ -154,7 +153,7 @@ class _ThesisApprovalDetailViewState extends State<_ThesisApprovalDetailView> {
               }
               
               Navigator.pop(context);
-              context.read<ThesisApprovalBloc>().add(
+              bloc.add(
                 RejectThesis(
                   thesisId: widget.thesis.id,
                   reason: rejectReasonController.text.trim(),

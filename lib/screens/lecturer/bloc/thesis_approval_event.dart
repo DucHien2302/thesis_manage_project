@@ -19,16 +19,14 @@ class LoadThesesForApproval extends ThesisApprovalEvent {
 class ApproveThesis extends ThesisApprovalEvent {
   final String thesisId;
   final int newStatus;
-  final String? reason;
 
   const ApproveThesis({
     required this.thesisId,
     required this.newStatus,
-    this.reason,
   });
 
   @override
-  List<Object?> get props => [thesisId, newStatus, reason];
+  List<Object> get props => [thesisId, newStatus];
 }
 
 class RejectThesis extends ThesisApprovalEvent {
@@ -47,16 +45,14 @@ class RejectThesis extends ThesisApprovalEvent {
 class BatchApproveTheses extends ThesisApprovalEvent {
   final List<String> thesisIds;
   final int newStatus;
-  final String? reason;
 
   const BatchApproveTheses({
     required this.thesisIds,
     required this.newStatus,
-    this.reason,
   });
 
   @override
-  List<Object?> get props => [thesisIds, newStatus, reason];
+  List<Object> get props => [thesisIds, newStatus];
 }
 
 class BatchRejectTheses extends ThesisApprovalEvent {

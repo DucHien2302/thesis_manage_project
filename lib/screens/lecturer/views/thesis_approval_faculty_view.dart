@@ -665,13 +665,16 @@ class _ThesisApprovalFacultyViewState extends State<ThesisApprovalFacultyView>
     );
   }
 
+  // Improved color differentiation for statuses
   Color _getStatusColor(String status) {
     if (status.contains('Chờ duyệt')) {
-      return AppColors.warning;
-    } else if (status.contains('Đã duyệt')) {
-      return AppColors.success;
+      return AppColors.warning; // Yellow
+    } else if (status.contains('Đã duyệt cấp bộ môn')) {
+      return AppColors.info; // Blue
+    } else if (status.contains('Đã duyệt cấp khoa')) {
+      return AppColors.success; // Green
     } else if (status.contains('Từ chối')) {
-      return AppColors.error;
+      return AppColors.error; // Red
     }
     return Colors.grey;
   }

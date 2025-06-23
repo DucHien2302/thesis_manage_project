@@ -65,16 +65,6 @@ class _ThesisApprovalModalState extends State<ThesisApprovalModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Bạn có chắc chắn muốn duyệt đề tài "${widget.thesis.name}"?'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Ghi chú (tùy chọn)',
-                border: OutlineInputBorder(),
-                hintText: 'Nhập ghi chú cho việc duyệt đề tài...',
-              ),
-              maxLines: 3,
-            ),
           ],
         ),
         actions: [
@@ -94,9 +84,6 @@ class _ThesisApprovalModalState extends State<ThesisApprovalModal> {
                 ApproveThesis(
                   thesisId: widget.thesis.id,
                   newStatus: newStatus,
-                  reason: _reasonController.text.trim().isEmpty 
-                      ? null 
-                      : _reasonController.text.trim(),
                 ),
               );
               

@@ -69,9 +69,8 @@ class ThesisApprovalRepository {
       print('❌ Batch update error: $e');
       throw Exception('Không thể cập nhật trạng thái đề tài: $e');
     }
-  }
-  /// Approve single thesis
-  Future<void> approveThesis(String thesisId, int newStatus, {String? reason}) async {
+  }  /// Approve single thesis - no reason required for approval
+  Future<void> approveThesis(String thesisId, int newStatus) async {
     try {
       print('🎯 Approving single thesis $thesisId with status $newStatus');
       
@@ -79,10 +78,7 @@ class ThesisApprovalRepository {
         id: thesisId,
         updateData: ThesisUpdateData(
           status: newStatus,
-          reason: reason ?? 'Individual approval',
-          // Ensure we don't send null arrays that might cause backend issues
-          lecturerIds: null,
-          reviewerIds: null,
+          // No reason needed for approval, only for rejection
         ),
       );
 
@@ -97,20 +93,16 @@ class ThesisApprovalRepository {
       print('❌ Individual approve error: $e');
       throw Exception('Không thể duyệt đề tài: $e');
     }
-  }
-  /// Reject single thesis
+  }  /// Reject single thesis - reason is required for rejection
   Future<void> rejectThesis(String thesisId, String reason) async {
     try {
-      print('🎯 Rejecting single thesis $thesisId');
+      print('🎯 Rejecting single thesis $thesisId with reason: $reason');
       
       final updateItem = ThesisBatchUpdateItem(
         id: thesisId,
         updateData: ThesisUpdateData(
           status: ThesisStatus.rejected,
-          reason: reason,
-          // Ensure we don't send null arrays that might cause backend issues
-          lecturerIds: null,
-          reviewerIds: null,
+          reason: reason, // Reason is required for rejection
         ),
       );
 
@@ -125,24 +117,18 @@ class ThesisApprovalRepository {
       print('❌ Individual reject error: $e');
       throw Exception('Không thể từ chối đề tài: $e');
     }
-  }
-  /// Batch approve multiple theses
+  }  /// Batch approve multiple theses - no reason required for approval
   Future<ThesisBatchUpdateResponse> batchApproveTheses(
     List<String> thesisIds, 
-    int newStatus,
-    {String? reason}
+    int newStatus
   ) async {
     try {
       print('🚀 Starting batch approve for ${thesisIds.length} theses with status $newStatus');
       
       final updateItems = thesisIds.map((id) => ThesisBatchUpdateItem(
-        id: id,
-        updateData: ThesisUpdateData(
+        id: id,        updateData: ThesisUpdateData(
           status: newStatus,
-          reason: reason ?? 'Batch approval',
-          // Ensure we don't send null arrays that might cause backend issues
-          lecturerIds: null, // Explicitly set to null rather than empty array
-          reviewerIds: null, // Explicitly set to null rather than empty array
+          // No reason needed for batch approval
         ),
       )).toList();
 
@@ -152,22 +138,20 @@ class ThesisApprovalRepository {
       throw Exception('Không thể duyệt hàng loạt đề tài: $e');
     }
   }
-  /// Batch reject multiple theses
+
+  /// Batch reject multiple theses - reason is required for rejection
   Future<ThesisBatchUpdateResponse> batchRejectTheses(
     List<String> thesisIds, 
     String reason
   ) async {
     try {
-      print('🚀 Starting batch reject for ${thesisIds.length} theses');
+      print('🚀 Starting batch reject for ${thesisIds.length} theses with reason: $reason');
       
       final updateItems = thesisIds.map((id) => ThesisBatchUpdateItem(
         id: id,
         updateData: ThesisUpdateData(
           status: ThesisStatus.rejected,
-          reason: reason,
-          // Ensure we don't send null arrays that might cause backend issues
-          lecturerIds: null, // Explicitly set to null rather than empty array
-          reviewerIds: null, // Explicitly set to null rather than empty array
+          reason: reason, // Reason is required for rejection
         ),
       )).toList();
 
