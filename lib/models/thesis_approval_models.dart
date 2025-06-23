@@ -4,7 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'thesis_approval_models.g.dart';
 
 // Request model for thesis batch update
-@JsonSerializable()
+@JsonSerializable(includeIfNull: false)
 class ThesisBatchUpdateRequest extends Equatable {
   final List<ThesisBatchUpdateItem> theses;
 
@@ -20,7 +20,7 @@ class ThesisBatchUpdateRequest extends Equatable {
   List<Object> get props => [theses];
 }
 
-@JsonSerializable()
+@JsonSerializable(includeIfNull: false)
 class ThesisBatchUpdateItem extends Equatable {
   final String id;
   @JsonKey(name: 'update_data')
@@ -39,7 +39,7 @@ class ThesisBatchUpdateItem extends Equatable {
   List<Object> get props => [id, updateData];
 }
 
-@JsonSerializable()
+@JsonSerializable(includeIfNull: false)
 class ThesisUpdateData extends Equatable {
   final String? title;
   final String? description;

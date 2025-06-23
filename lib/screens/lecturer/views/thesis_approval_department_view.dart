@@ -591,7 +591,9 @@ class _ThesisApprovalDepartmentViewState extends State<ThesisApprovalDepartmentV
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: OutlinedButton.icon(                                              onPressed: () {                                                ThesisApprovalModal.show(
+                                            child: OutlinedButton.icon(
+                                              onPressed: () {
+                                                ThesisApprovalModal.show(
                                                   context,
                                                   thesis,
                                                   ApprovalType.department,
@@ -616,12 +618,15 @@ class _ThesisApprovalDepartmentViewState extends State<ThesisApprovalDepartmentV
                                           Expanded(
                                             child: ElevatedButton.icon(
                                               onPressed: () {
-                                                context.read<ThesisApprovalBloc>().add(
-                                                  ApproveThesis(
-                                                    thesisId: thesis.id,
-                                                    newStatus: ThesisStatus.departmentApproved,
-                                                  ),
-                                                );
+                                                ThesisApprovalModal.show(
+                                                  context,
+                                                  thesis,
+                                                  ApprovalType.department,
+                                                ).then((result) {
+                                                  if (result == true) {
+                                                    context.read<ThesisApprovalBloc>().add(const RefreshTheses());
+                                                  }
+                                                });
                                               },
                                               icon: const Icon(Icons.check, size: 16),
                                               label: const Text('Duyệt'),
@@ -639,10 +644,10 @@ class _ThesisApprovalDepartmentViewState extends State<ThesisApprovalDepartmentV
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  );
+                          );
+                        },
+                      ),
+                    ); // End of RefreshIndicator
                 }
 
                 return const Center(
@@ -656,13 +661,16 @@ class _ThesisApprovalDepartmentViewState extends State<ThesisApprovalDepartmentV
     );
   }
 
+  // Improved color differentiation for statuses
   Color _getStatusColor(String status) {
     if (status.contains('Chờ duyệt')) {
-      return AppColors.warning;
-    } else if (status.contains('Đã duyệt')) {
-      return AppColors.success;
+      return AppColors.warning; // Yellow
+    } else if (status.contains('Đã duyệt cấp bộ môn')) {
+      return AppColors.info; // Blue
+    } else if (status.contains('Đã duyệt cấp khoa')) {
+      return AppColors.success; // Green
     } else if (status.contains('Từ chối')) {
-      return AppColors.error;
+      return AppColors.error; // Red
     }
     return Colors.grey;
   }

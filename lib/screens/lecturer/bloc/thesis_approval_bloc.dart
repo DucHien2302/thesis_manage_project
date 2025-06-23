@@ -40,7 +40,6 @@ class ThesisApprovalBloc extends Bloc<ThesisApprovalEvent, ThesisApprovalState> 
       emit(ThesisApprovalError(message: e.toString()));
     }
   }
-
   Future<void> _onApproveThesis(
     ApproveThesis event,
     Emitter<ThesisApprovalState> emit,
@@ -50,7 +49,6 @@ class ThesisApprovalBloc extends Bloc<ThesisApprovalEvent, ThesisApprovalState> 
       await _repository.approveThesis(
         event.thesisId, 
         event.newStatus,
-        reason: event.reason,
       );
       
       emit(ThesisApprovalActionSuccess(
@@ -88,7 +86,6 @@ class ThesisApprovalBloc extends Bloc<ThesisApprovalEvent, ThesisApprovalState> 
       emit(ThesisApprovalError(message: e.toString()));
     }
   }
-
   Future<void> _onBatchApproveTheses(
     BatchApproveTheses event,
     Emitter<ThesisApprovalState> emit,
@@ -98,7 +95,6 @@ class ThesisApprovalBloc extends Bloc<ThesisApprovalEvent, ThesisApprovalState> 
       final response = await _repository.batchApproveTheses(
         event.thesisIds,
         event.newStatus,
-        reason: event.reason,
       );
       
       String message = 'Duyệt ${response.successCount} đề tài thành công!';
