@@ -103,6 +103,41 @@ class ApiService {
     }
   }
   
+  /// Thực hiện HTTP PATCH request
+  /// 
+  /// [endpoint]: Đường dẫn API, sẽ được thêm vào sau BaseURL
+  /// [headers]: Headers bổ sung nếu cần
+  /// [body]: Body của request, sẽ được encode sang JSON
+  Future<dynamic> patch(
+    String endpoint, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    final authHeaders = await _getAuthHeaders(headers);
+
+    try {
+      _logger.debug('API PATCH request to: ${url.toString()}');
+      if (body != null) {
+        _logger.debug('Request body: ${json.encode(body)}');
+      }
+      
+      final response = await _httpClient.patch(
+        url,
+        headers: authHeaders,
+        body: body != null ? json.encode(body) : null,
+      );
+      
+      _logger.debug('API response status: ${response.statusCode}');
+      _logger.debug('API response body: ${response.body}');
+      
+      return _handleResponse(response);
+    } catch (e) {
+      _logger.error('API patch error: $e');
+      throw Exception('Lỗi kết nối mạng: $e');
+    }
+  }
+  
   /// Thực hiện HTTP DELETE request
   /// 
   /// [endpoint]: Đường dẫn API, sẽ được thêm vào sau BaseURL
