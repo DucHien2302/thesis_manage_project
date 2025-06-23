@@ -53,11 +53,12 @@ class MissionLoading extends MissionState {}
 
 class TasksLoaded extends MissionState {
   final List<Task> tasks;
+  final String thesisId;
 
-  const TasksLoaded({required this.tasks});
+  const TasksLoaded({required this.tasks, required this.thesisId});
 
   @override
-  List<Object?> get props => [tasks];
+  List<Object?> get props => [tasks, thesisId];
 }
 
 class MissionWithTasksLoaded extends MissionState {
@@ -98,7 +99,6 @@ class MissionBloc extends Bloc<MissionEvent, MissionState> {
     on<LoadMissionDetails>(_onLoadMissionDetails);
     on<UpdateTaskStatus>(_onUpdateTaskStatus);
   }
-
   Future<void> _onLoadTasksForThesis(
     LoadTasksForThesis event,
     Emitter<MissionState> emit,
@@ -106,7 +106,7 @@ class MissionBloc extends Bloc<MissionEvent, MissionState> {
     try {
       emit(MissionLoading());
       final tasks = await _missionRepository.getTasksForThesis(event.thesisId);
-      emit(TasksLoaded(tasks: tasks));
+      emit(TasksLoaded(tasks: tasks, thesisId: event.thesisId));
     } catch (e) {
       emit(MissionError(message: e.toString()));
     }
@@ -142,12 +142,11 @@ class MissionBloc extends Bloc<MissionEvent, MissionState> {
       
       // First emit the updated task
       emit(TaskUpdated(task: updatedTask));
-      
-      // Then fetch and emit the updated list or mission if needed
+        // Then fetch and emit the updated list or mission if needed
       if (currentState is TasksLoaded) {
-        // If we were viewing a list of tasks, refresh that list
-        final tasks = await _missionRepository.getTasksForThesis(updatedTask.missionId);
-        emit(TasksLoaded(tasks: tasks));
+        // If we were viewing a list of tasks, refresh that list using the original thesisId
+        final tasks = await _missionRepository.getTasksForThesis(currentState.thesisId);
+        emit(TasksLoaded(tasks: tasks, thesisId: currentState.thesisId));
       } else if (currentState is MissionWithTasksLoaded) {
         // If we were viewing a mission with tasks, refresh that mission
         final mission = await _missionRepository.getMissionWithTasks(

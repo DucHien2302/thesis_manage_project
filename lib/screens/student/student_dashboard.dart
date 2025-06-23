@@ -256,38 +256,17 @@ class _StudentDashboardState extends State<StudentDashboard> {
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _buildCurrentPage(),
-        ),
-        floatingActionButton: _currentIndex == 0 
+        ),        floatingActionButton: _currentIndex == 0 
             ? FloatingActionButton.extended(
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      title: const Text('Tạo mới'),
-                      content: const Text('Bạn muốn tạo gì?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Hủy'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Tính năng đang phát triển')),
-                            );
-                          },
-                          child: const Text('Tạo nhiệm vụ'),
-                        ),
-                      ],
-                    ),
-                  );
+                  // Navigate to Group tab for group management
+                  setState(() {
+                    _currentIndex = 1; // Group tab
+                    _currentPageTitle = _menuItems[1]['pageTitle'];
+                  });
                 },
-                icon: const Icon(Icons.add),
-                label: const Text('Tạo mới'),
+                icon: const Icon(Icons.group),
+                label: const Text('Quản lý nhóm'),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               )
@@ -548,13 +527,22 @@ class _StudentDashboardState extends State<StudentDashboard> {
               _showLogoutDialog(context);
             },
           ),
-        ],
-      ),
+        ],      ),
     );
-  }  Widget _buildCurrentPage() {
+  }
+  void _onTabChange(int newIndex) {
+    if (newIndex != _currentIndex && newIndex >= 0 && newIndex < _menuItems.length) {
+      setState(() {
+        _currentIndex = newIndex;
+        _currentPageTitle = _menuItems[newIndex]['pageTitle'];
+      });
+    }
+  }
+
+  Widget _buildCurrentPage() {
     switch (_currentIndex) {
       case 0:
-        return const OverviewTab();
+        return OverviewTab(onTabChange: _onTabChange);
       case 1:
         return const GroupTab();
       case 2:
@@ -571,7 +559,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
       case 4:
         return const ProfileScreen();
       default:
-        return const OverviewTab();
+        return OverviewTab(onTabChange: _onTabChange);
     }
   }
 }

@@ -42,15 +42,17 @@ class MissionRepository {
       throw Exception('Error fetching task details: $e');
     }
   }  /// Cập nhật trạng thái của task
-  /// API: PATCH /progress/tasks/{task_id}/status - sử dụng PUT vì ApiService không có phương thức patch
+  /// API: PATCH /progress/tasks/{task_id}/status
   Future<Task> updateTaskStatus(String taskId, int newStatus) async {
     try {
-      final response = await _apiService.put(
+      print('DEBUG: Calling updateTaskStatus with taskId: $taskId, status: $newStatus');
+      final response = await _apiService.patch(
         '${ApiConfig.taskStatusEndpoint}$taskId/status',
         body: {
           'status': newStatus,
         },
       );
+      print('DEBUG: Update task status response: $response');
       
       // API service returns the parsed JSON directly
       if (response is Map<String, dynamic>) {
