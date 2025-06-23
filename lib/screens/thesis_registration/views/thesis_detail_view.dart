@@ -32,19 +32,27 @@ class _ThesisDetailViewState extends State<ThesisDetailView> {
   void _loadMyGroups() {
     context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
   }
-
   @override
   void dispose() {
+    // When the view is disposed (including when back button is pressed),
+    // reload the thesis list data
+    context.read<ThesisRegistrationBloc>().add(const LoadMyGroups());
     _notesController.dispose();
     super.dispose();
-  }
-  @override
+  }@override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chi tiết đề tài'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textLight,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Pop and trigger reload
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimens.marginMedium),
