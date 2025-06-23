@@ -47,7 +47,6 @@ class LecturerThesisCreating extends LecturerThesisState {}
 
 class LecturerThesisCreated extends LecturerThesisState {
   final ThesisModel thesis;
-
   const LecturerThesisCreated({required this.thesis});
 
   @override

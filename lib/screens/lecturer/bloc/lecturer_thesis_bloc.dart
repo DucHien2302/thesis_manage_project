@@ -11,8 +11,7 @@ class LecturerThesisBloc extends Bloc<LecturerThesisEvent, LecturerThesisState> 
 
   LecturerThesisBloc({required LecturerThesisRepository repository})
       : _repository = repository,
-        super(LecturerThesisInitial()) {
-    on<LoadLecturerTheses>(_onLoadLecturerTheses);
+        super(LecturerThesisInitial()) {    on<LoadLecturerTheses>(_onLoadLecturerTheses);
     on<RefreshLecturerTheses>(_onRefreshLecturerTheses);
     on<FilterLecturerTheses>(_onFilterLecturerTheses);
     on<CreateThesis>(_onCreateThesis);
@@ -97,8 +96,7 @@ class LecturerThesisBloc extends Bloc<LecturerThesisEvent, LecturerThesisState> 
       final thesis = await _repository.createThesis(event.thesisRequest.toJson());
       emit(LecturerThesisCreated(thesis: thesis));
       // Reload the thesis list
-      add(const LoadLecturerTheses());
-    } catch (e) {
+      add(const LoadLecturerTheses());    } catch (e) {
       emit(LecturerThesisError(message: e.toString()));
     }
   }
