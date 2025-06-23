@@ -22,40 +22,109 @@ class OverviewTab extends StatefulWidget {
   State<OverviewTab> createState() => _OverviewTabState();
 }
 
-class _OverviewTabState extends State<OverviewTab> {
-  late ProfileBloc _profileBloc;
-  late GroupRepository _groupRepository;
-  late ThesisRepository _thesisRepository;
+class _OverviewTabState extends State<OverviewTab> with AutomaticKeepAliveClientMixin {
+  ProfileBloc? _profileBloc;
+  GroupRepository? _groupRepository;
+  ThesisRepository? _thesisRepository;
   GroupModel? _currentGroup;
   thesis_models.ThesisModel? _currentThesis;
   String? _thesisId;
   List<Task> _currentTasks = [];
   bool _isLoadingGroup = false;
   bool _isLoadingThesis = false;
-  bool _isLoadingTasks = false;  @override
+  bool _isLoadingTasks = false;
+  
+  // Cache cho các tính toán
+  String? _cachedProgressText;
+  Color? _cachedProgressColor;
+  double? _cachedProgress;
+    @override
+  bool get wantKeepAlive => true;
+    // Cache invalidation
+  void _invalidateCache() {
+    _cachedProgressText = null;
+    _cachedProgressColor = null;
+    _cachedProgress = null;
+  }
+  
+  // Optimized statistics grid
+  Widget _buildStatisticsGrid() {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.2,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      children: [
+        StatCard(
+          icon: Icons.assignment,
+          title: 'Trạng thái đề tài',
+          value: _getThesisStatus(),
+          subtitle: _getThesisName(),
+          color: _getThesisStatusColor(),
+        ),
+        StatCard(
+          icon: Icons.trending_up,
+          title: 'Tiến độ',
+          value: _isLoadingTasks 
+              ? 'Đang tải...' 
+              : _currentTasks.isEmpty 
+                ? '0%' 
+                : '${(_calculateOverallProgress() * 100).round()}%',
+          subtitle: _getProgressText(),
+          color: _getProgressColor(),
+        ),
+        StatCard(
+          icon: Icons.task_alt,
+          title: 'Nhiệm vụ',
+          value: _isLoadingTasks 
+              ? 'Đang tải...' 
+              : _currentTasks.where((task) => !task.isCompleted).length.toString(),
+          subtitle: 'Còn lại',
+          color: AppColors.error,
+        ),
+        StatCard(
+          icon: Icons.group,
+          title: 'Nhóm',
+          value: _getGroupDisplayValue(),
+          subtitle: _getGroupSubtitle(),
+          color: AppColors.primary,
+        ),
+      ],
+    );
+  }@override
   void initState() {
     super.initState();
-    _profileBloc = ProfileBloc(
-      profileRepository: ProfileRepository(apiService: ApiService())
-    );
-    _groupRepository = GroupRepository(apiService: ApiService());
-    _thesisRepository = ThesisRepository(apiService: ApiService());
+    _initializeRepositories();
     
-    // Load profile data and group data
-    _loadProfile();
-    _loadGroupInfo();
+    // Delay loading để tránh blocking UI
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProfile();
+      _loadGroupInfo();
+    });
   }
-
+  
+  void _initializeRepositories() {
+    final apiService = ApiService();
+    _profileBloc = ProfileBloc(
+      profileRepository: ProfileRepository(apiService: apiService)
+    );
+    _groupRepository = GroupRepository(apiService: apiService);
+    _thesisRepository = ThesisRepository(apiService: apiService);
+  }
   void _loadProfile() {
     final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
+    if (authState is Authenticated && _profileBloc != null) {
       final userId = authState.user['id']?.toString() ?? '';
-      _profileBloc.add(LoadProfile(
+      _profileBloc!.add(LoadProfile(
         userType: AppConfig.userTypeStudent,
         userId: userId,
       ));
     }
   }  void _loadGroupInfo() async {
+    if (_groupRepository == null) return;
+    
     setState(() {
       _isLoadingGroup = true;
       _isLoadingThesis = true;
@@ -63,11 +132,12 @@ class _OverviewTabState extends State<OverviewTab> {
     });
     
     try {
-      final currentGroup = await _groupRepository.getCurrentUserGroup();
+      final currentGroup = await _groupRepository!.getCurrentUserGroup();
       if (mounted) {
         setState(() {
           _currentGroup = currentGroup;
           _isLoadingGroup = false;
+          _invalidateCache(); // Invalidate cache when data changes
         });
         
         // Load thesis information if group has a thesis
@@ -81,6 +151,7 @@ class _OverviewTabState extends State<OverviewTab> {
             _isLoadingThesis = false;
             _currentTasks = [];
             _isLoadingTasks = false;
+            _invalidateCache();
           });
         }
       }
@@ -93,18 +164,21 @@ class _OverviewTabState extends State<OverviewTab> {
           _isLoadingThesis = false;
           _currentTasks = [];
           _isLoadingTasks = false;
+          _invalidateCache();
         });
       }
     }
-  }
-    // Method to load thesis information
+  }  // Method to load thesis information
   void _loadThesisInfo(String thesisId) async {
+    if (_thesisRepository == null) return;
+    
     try {
-      final thesis = await _thesisRepository.getThesisById(thesisId);
+      final thesis = await _thesisRepository!.getThesisById(thesisId);
       if (mounted) {
         setState(() {
           _currentThesis = thesis;
           _isLoadingThesis = false;
+          _invalidateCache();
         });
       }
     } catch (e) {
@@ -113,40 +187,51 @@ class _OverviewTabState extends State<OverviewTab> {
         setState(() {
           _currentThesis = null;
           _isLoadingThesis = false;
+          _invalidateCache();
         });
       }
     }
   }
-  
-  // Method to load tasks information
+    // Method to load tasks information - Tối ưu để tránh memory leak
   void _loadTasksInfo(String thesisId) async {
+    if (!mounted) return;
+    
     try {
       // Access the MissionBloc from context
       final missionBloc = context.read<MissionBloc>();
       
-      // Listen to the bloc state changes
-      final subscription = missionBloc.stream.listen((state) {
+      // Listen to the bloc state changes with better memory management
+      late final subscription;
+      subscription = missionBloc.stream.listen((state) {
         if (mounted) {
           if (state is TasksLoaded) {
             setState(() {
               _currentTasks = state.tasks;
               _isLoadingTasks = false;
+              _invalidateCache();
             });
+            subscription.cancel(); // Cancel immediately after success
           } else if (state is MissionError) {
             setState(() {
               _currentTasks = [];
               _isLoadingTasks = false;
+              _invalidateCache();
             });
+            subscription.cancel(); // Cancel on error too
           }
+        } else {
+          subscription.cancel(); // Cancel if widget is disposed
         }
       });
       
       // Load tasks for the thesis
       missionBloc.add(LoadTasksForThesis(thesisId: thesisId));
       
-      // Clean up subscription after a delay
-      Future.delayed(const Duration(seconds: 5), () {
-        subscription.cancel();
+      // Cleanup subscription after timeout to prevent memory leak
+      Future.delayed(const Duration(seconds: 10), () {
+        if (mounted) {
+          subscription.cancel();
+        }
       });
     } catch (e) {
       print('Error loading tasks: $e');
@@ -154,40 +239,65 @@ class _OverviewTabState extends State<OverviewTab> {
         setState(() {
           _currentTasks = [];
           _isLoadingTasks = false;
+          _invalidateCache();
         });
       }
     }
-  }
-  // Helper methods để tính toán tiến độ thực tế
+  }  // Helper methods để tính toán tiến độ thực tế - Với caching
   double _calculateOverallProgress() {
-    if (_currentTasks.isEmpty) return 0.0;
-    final completedTasks = _currentTasks.where((task) => task.isCompleted).length;
-    return completedTasks / _currentTasks.length;
+    if (_cachedProgress != null) return _cachedProgress!;
+    
+    if (_currentTasks.isEmpty) {
+      _cachedProgress = 0.0;
+    } else {
+      final completedTasks = _currentTasks.where((task) => task.isCompleted).length;
+      _cachedProgress = completedTasks / _currentTasks.length;
+    }
+    return _cachedProgress!;
   }
   
   String _getProgressText() {
+    if (_cachedProgressText != null) return _cachedProgressText!;
+    
     if (_isLoadingTasks) return 'Đang tải...';
     if (_currentTasks.isEmpty) return 'Chưa có nhiệm vụ';
     
     final progress = _calculateOverallProgress();
     final percent = (progress * 100).round();
     
-    if (percent >= 80) return 'Gần hoàn thành';
-    if (percent >= 60) return 'Đang tiến triển tốt';
-    if (percent >= 40) return 'Đang thực hiện';
-    if (percent >= 20) return 'Mới bắt đầu';
-    return 'Chưa bắt đầu';
+    if (percent >= 80) {
+      _cachedProgressText = 'Gần hoàn thành';
+    } else if (percent >= 60) {
+      _cachedProgressText = 'Đang tiến triển tốt';
+    } else if (percent >= 40) {
+      _cachedProgressText = 'Đang thực hiện';
+    } else if (percent >= 20) {
+      _cachedProgressText = 'Mới bắt đầu';
+    } else {
+      _cachedProgressText = 'Chưa bắt đầu';
+    }
+    return _cachedProgressText!;
   }
   
   Color _getProgressColor() {
-    if (_isLoadingTasks || _currentTasks.isEmpty) return AppColors.info;
+    if (_cachedProgressColor != null) return _cachedProgressColor!;
     
-    final progress = _calculateOverallProgress();
-    
-    if (progress >= 0.8) return AppColors.success;
-    if (progress >= 0.6) return AppColors.primary;
-    if (progress >= 0.4) return AppColors.warning;
-    return AppColors.error;
+    if (_isLoadingTasks || _currentTasks.isEmpty) {
+      _cachedProgressColor = AppColors.info;
+    } else {
+      final progress = _calculateOverallProgress();
+      
+      if (progress >= 0.8) {
+        _cachedProgressColor = AppColors.success;
+      } else if (progress >= 0.6) {
+        _cachedProgressColor = AppColors.primary;
+      } else if (progress >= 0.4) {
+        _cachedProgressColor = AppColors.warning;
+      } else {
+        _cachedProgressColor = AppColors.error;
+      }
+    }
+    return _cachedProgressColor!;
   }
 
   // Helper methods để hiển thị thông tin nhóm
@@ -324,25 +434,38 @@ class _OverviewTabState extends State<OverviewTab> {
         ? _currentThesis!.name.substring(0, 20) + '...' 
         : _currentThesis!.name;
   }
-
   @override
   void dispose() {
-    _profileBloc.close();
+    _profileBloc?.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
+    // Return early if ProfileBloc is not initialized
+    if (_profileBloc == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
     return BlocProvider.value(
-      value: _profileBloc,
+      value: _profileBloc!,
       child: RefreshIndicator(        onRefresh: () async {
+          // Invalidate cache before refresh
+          _invalidateCache();
+          
+          // Batch refresh operations to avoid multiple rebuilds
           _loadProfile();
           _loadGroupInfo();
+          
           // Also reload tasks if we have thesis ID
-          if (_thesisId != null) {
+          if (_thesisId != null && mounted) {
             context.read<MissionBloc>().add(LoadTasksForThesis(thesisId: _thesisId!));
           }
-          await Future.delayed(const Duration(milliseconds: 500));
+          
+          // Shorter delay for better UX
+          await Future.delayed(const Duration(milliseconds: 300));
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -391,8 +514,7 @@ class _OverviewTabState extends State<OverviewTab> {
                 ),
               ),
               const SizedBox(height: 20),
-              
-              // Thống kê nhanh
+                // Thống kê nhanh - Tối ưu với cached widgets
               const Text(
                 'Thống kê nhanh',
                 style: TextStyle(
@@ -402,49 +524,7 @@ class _OverviewTabState extends State<OverviewTab> {
                 ),
               ),
               const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                children: [
-                  StatCard(
-                    icon: Icons.assignment,
-                    title: 'Trạng thái đề tài',
-                    value: _getThesisStatus(),
-                    subtitle: _getThesisName(),
-                    color: _getThesisStatusColor(),
-                  ),                  StatCard(
-                    icon: Icons.trending_up,
-                    title: 'Tiến độ',
-                    value: _isLoadingTasks 
-                        ? 'Đang tải...' 
-                        : _currentTasks.isEmpty 
-                          ? '0%' 
-                          : '${(_calculateOverallProgress() * 100).round()}%',
-                    subtitle: _getProgressText(),
-                    color: _getProgressColor(),
-                  ),
-                  StatCard(
-                    icon: Icons.task_alt,
-                    title: 'Nhiệm vụ',
-                    value: _isLoadingTasks 
-                        ? 'Đang tải...' 
-                        : _currentTasks.where((task) => !task.isCompleted).length.toString(),
-                    subtitle: 'Còn lại',
-                    color: AppColors.error,
-                  ),
-                  StatCard(
-                    icon: Icons.group,
-                    title: 'Nhóm',
-                    value: _getGroupDisplayValue(),
-                    subtitle: _getGroupSubtitle(),
-                    color: AppColors.primary,
-                  ),
-                ],
-              ),
+              _buildStatisticsGrid(),
               
               const SizedBox(height: 24),
               

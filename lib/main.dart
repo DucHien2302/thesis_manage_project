@@ -9,5 +9,8 @@ void main() {
   // Đăng ký BlocObserver để theo dõi trạng thái Bloc
   Bloc.observer = SimpleBlocObserver();
   
+  // For testing lecturer thesis management
+  // runApp(MaterialApp(home: TestLecturerThesisScreen()));
+  
   runApp(const App());
 }
