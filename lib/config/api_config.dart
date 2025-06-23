@@ -1,6 +1,6 @@
 class ApiConfig {
-  // static const String baseUrl = 'http://10.0.2.2:8000'; // Thay đổi URL API khi cần
-  static const String baseUrl = 'https://ed0b-2001-ee0-555b-d7a0-694a-cd02-34ed-fd50.ngrok-free.app'; // Thay đổi URL API khi cần
+  // static const String baseUrl = 'http://10.0.2.2:8000'; // Change this to your actual API URL
+  static const String baseUrl = 'https://ed0b-2001-ee0-555b-d7a0-694a-cd02-34ed-fd50.ngrok-free.app'; // Production URL
 
   // Auth APIs
   static const String login = '/auth/login';
@@ -40,9 +40,13 @@ class ApiConfig {
   static const String information = '/information/';
   static const String studentProfile = '/student-profile/';
   static const String lecturerProfile = '/lecturer-profile/';
-  
-  // Academy APIs
+    // Academy APIs
   static const String academyYears = '/academy/years';
   static const String semestersByYear = '/academy/years/';  // + {academy_year_id}/semesters
   static const String batchesBySemester = '/academy/semesters/'; // + {semester_id}/batches
+    // Progress APIs
+  static const String missions = '/progress/missions';
+  static const String thesisTasksEndpoint = '/progress/theses/'; // + {thesis_id}/tasks
+  static const String tasksEndpoint = '/progress/tasks'; // + /{task_id}
+  static const String taskStatusEndpoint = '/progress/tasks/'; // + {task_id}/status
 }

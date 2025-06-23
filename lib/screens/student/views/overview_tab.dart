@@ -5,7 +5,9 @@ import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
 import 'package:thesis_manage_project/repositories/group_repository.dart';
+import 'package:thesis_manage_project/repositories/thesis_repository.dart';
 import 'package:thesis_manage_project/models/group_models.dart';
+import 'package:thesis_manage_project/models/thesis_models.dart' as thesis_models;
 import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/widgets/modern_card.dart';
 import 'package:thesis_manage_project/widgets/ui_components.dart';
@@ -20,8 +22,11 @@ class OverviewTab extends StatefulWidget {
 class _OverviewTabState extends State<OverviewTab> {
   late ProfileBloc _profileBloc;
   late GroupRepository _groupRepository;
+  late ThesisRepository _thesisRepository;
   GroupModel? _currentGroup;
+  thesis_models.ThesisModel? _currentThesis;
   bool _isLoadingGroup = false;
+  bool _isLoadingThesis = false;
 
   @override
   void initState() {
@@ -30,6 +35,7 @@ class _OverviewTabState extends State<OverviewTab> {
       profileRepository: ProfileRepository(apiService: ApiService())
     );
     _groupRepository = GroupRepository(apiService: ApiService());
+    _thesisRepository = ThesisRepository(apiService: ApiService());
     
     // Load profile data and group data
     _loadProfile();
@@ -46,10 +52,10 @@ class _OverviewTabState extends State<OverviewTab> {
       ));
     }
   }
-
   void _loadGroupInfo() async {
     setState(() {
       _isLoadingGroup = true;
+      _isLoadingThesis = true;
     });
     
     try {
@@ -59,12 +65,45 @@ class _OverviewTabState extends State<OverviewTab> {
           _currentGroup = currentGroup;
           _isLoadingGroup = false;
         });
+        
+        // Load thesis information if group has a thesis
+        if (currentGroup != null && currentGroup.thesisId != null) {
+          _loadThesisInfo(currentGroup.thesisId!);
+        } else {
+          setState(() {
+            _currentThesis = null;
+            _isLoadingThesis = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _currentGroup = null;
           _isLoadingGroup = false;
+          _currentThesis = null;
+          _isLoadingThesis = false;
+        });
+      }
+    }
+  }
+  
+  // Method to load thesis information
+  void _loadThesisInfo(String thesisId) async {
+    try {
+      final thesis = await _thesisRepository.getThesisById(thesisId);
+      if (mounted) {
+        setState(() {
+          _currentThesis = thesis;
+          _isLoadingThesis = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading thesis: $e');
+      if (mounted) {
+        setState(() {
+          _currentThesis = null;
+          _isLoadingThesis = false;
         });
       }
     }
@@ -115,6 +154,94 @@ class _OverviewTabState extends State<OverviewTab> {
     } else {
       return '$memberCount thành viên';
     }
+  }
+  // Helper method để lấy trạng thái đề tài
+  String _getThesisStatus() {
+    if (_isLoadingThesis) {
+      return 'Đang tải...';
+    }
+    
+    if (_currentGroup == null) {
+      return 'Chưa có đề tài';
+    }
+    
+    if (_currentGroup!.thesisId == null) {
+      return 'Chưa đăng ký';
+    }
+    
+    if (_currentThesis == null) {
+      return 'Đã đăng ký';
+    }
+    
+    // Map status từ API thành các trạng thái hiển thị người dùng
+    switch (_currentThesis!.status.toLowerCase()) {
+      case 'pending':
+        return 'Chờ xét duyệt';
+      case 'approved':
+        return 'Được chấp thuận';
+      case 'in progress':
+        return 'Đang thực hiện';
+      case 'completed':
+        return 'Đã hoàn thành';
+      case 'rejected':
+        return 'Bị từ chối';
+      case 'đang thực hiện':
+        return 'Đang thực hiện';
+      case 'hoàn thành':
+        return 'Đã hoàn thành';
+      default:
+        return 'Đang thực hiện';
+    }
+  }
+  
+  // Helper method để lấy màu cho trạng thái đề tài
+  Color _getThesisStatusColor() {
+    if (_isLoadingThesis || _currentGroup == null || _currentGroup!.thesisId == null) {
+      return AppColors.info;  // Default blue
+    }
+    
+    if (_currentThesis == null) {
+      return AppColors.primary;  // Primary color
+    }
+    
+    switch (_currentThesis!.status.toLowerCase()) {
+      case 'pending':
+        return AppColors.warning;  // Yellow for pending
+      case 'approved':
+        return AppColors.success;  // Green for approved
+      case 'in progress':
+        return AppColors.info;     // Blue for in progress
+      case 'completed':
+        return AppColors.success;  // Green for completed
+      case 'rejected':
+        return AppColors.error;    // Red for rejected
+      case 'đang thực hiện':
+        return AppColors.info;     // Blue for in progress
+      case 'hoàn thành':
+        return AppColors.success;  // Green for completed
+      default:
+        return AppColors.info;     // Default blue
+    }
+  }
+
+  // Helper method để lấy tiêu đề của đề tài (nếu có)
+  String? _getThesisName() {
+    if (_isLoadingThesis) {
+      return 'Đang tải...';
+    }
+    
+    if (_currentGroup == null || _currentGroup!.thesisId == null) {
+      return null;
+    }
+    
+    if (_currentThesis == null) {
+      return null;
+    }
+    
+    // Trả về tên của đề tài
+    return _currentThesis!.name.length > 20 
+        ? _currentThesis!.name.substring(0, 20) + '...' 
+        : _currentThesis!.name;
   }
 
   @override
@@ -202,8 +329,9 @@ class _OverviewTabState extends State<OverviewTab> {
                   StatCard(
                     icon: Icons.assignment,
                     title: 'Trạng thái đề tài',
-                    value: 'Đang thực hiện',
-                    color: AppColors.info,
+                    value: _getThesisStatus(),
+                    subtitle: _getThesisName(),
+                    color: _getThesisStatusColor(),
                   ),
                   StatCard(
                     icon: Icons.trending_up,

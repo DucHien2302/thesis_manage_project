@@ -61,7 +61,29 @@ class StudentRepository {
         orElse: () => throw Exception('Student not found'),
       );
     } catch (e) {
-      print('Error getting student by ID: $e');      return null;
+      print('Error getting student by ID: $e');      
+      return null;
+    }
+  }  /// Get current student's thesis ID from their group
+  Future<String?> getCurrentStudentThesisId() async {
+    try {
+      print('DEBUG: Calling getCurrentStudentThesisId');
+      final response = await _apiService.get('/group/my-groups');
+      print('DEBUG: Group API response: $response');
+      
+      if (response is List && response.isNotEmpty) {
+        final firstGroup = response.first;
+        print('DEBUG: First group data: $firstGroup');
+        final thesisId = firstGroup['thesis_id']?.toString();
+        print('DEBUG: Extracted thesis_id: $thesisId');
+        return thesisId;
+      }
+      
+      print('DEBUG: No groups found or empty response');
+      return null;
+    } catch (e) {
+      print('DEBUG: Error getting current student thesis ID: $e');
+      return null;
     }
   }
 }

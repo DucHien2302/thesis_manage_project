@@ -3,12 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thesis_manage_project/app_view.dart';
 import 'package:thesis_manage_project/repositories/auth_repository.dart';
 import 'package:thesis_manage_project/repositories/group_repository.dart';
+import 'package:thesis_manage_project/repositories/mission_repository.dart';
 import 'package:thesis_manage_project/repositories/role_repository.dart';
 import 'package:thesis_manage_project/repositories/profile_repository.dart';
+import 'package:thesis_manage_project/repositories/student_repository.dart';
 import 'package:thesis_manage_project/repositories/thesis_repository.dart';
 import 'package:thesis_manage_project/screens/auth/blocs/auth_bloc.dart';
 import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/profile/bloc/profile_bloc.dart';
+import 'package:thesis_manage_project/screens/student/bloc/mission_bloc.dart';
 import 'package:thesis_manage_project/services/permission_service.dart';
 import 'package:thesis_manage_project/utils/api_service.dart';
 
@@ -39,22 +42,31 @@ class App extends StatelessWidget {
           create: (context) => RoleRepository(
             apiService: context.read<ApiService>(),
           ),
-        ),
-        // Profile Repository
+        ),        // Profile Repository
         RepositoryProvider<ProfileRepository>(
           create: (context) => ProfileRepository(
             apiService: context.read<ApiService>(),
           ),        ),
+        // Student Repository
+        RepositoryProvider<StudentRepository>(
+          create: (context) => StudentRepository(
+            apiService: context.read<ApiService>(),
+          ),
+        ),
         // Thesis Repository
         RepositoryProvider<ThesisRepository>(
           create: (context) => ThesisRepository(
             apiService: context.read<ApiService>(),
           ),
-        ),
-        // Permission Service
+        ),        // Permission Service
         RepositoryProvider<PermissionService>(
           create: (context) => PermissionService(
             roleRepository: context.read<RoleRepository>(),
+          ),
+        ),        // Mission Repository
+        RepositoryProvider<MissionRepository>(
+          create: (context) => MissionRepository(
+            apiService: context.read<ApiService>(),
           ),
         ),
       ],
@@ -71,11 +83,15 @@ class App extends StatelessWidget {
             create: (context) => GroupBloc(
               groupRepository: context.read<GroupRepository>(),
             ),
-          ),
-          // Profile Bloc
+          ),          // Profile Bloc
           BlocProvider<ProfileBloc>(
             create: (context) => ProfileBloc(
               profileRepository: context.read<ProfileRepository>(),
+            ),
+          ),          // Mission Bloc
+          BlocProvider<MissionBloc>(
+            create: (context) => MissionBloc(
+              missionRepository: context.read<MissionRepository>(),
             ),
           ),
         ],
