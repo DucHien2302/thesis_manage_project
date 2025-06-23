@@ -243,3 +243,43 @@ Map<String, dynamic> _$GroupModelToJson(GroupModel instance) =>
       'thesis_id': instance.thesisId,
       'members': instance.members,
     };
+
+ThesisCreateRequest _$ThesisCreateRequestFromJson(Map<String, dynamic> json) =>
+    ThesisCreateRequest(
+      title: json['title'] as String,
+      description: json['description'] as String,
+      thesisType: (json['thesis_type'] as num).toInt(),
+      startDate: json['start_date'] as String,
+      endDate: json['end_date'] as String,
+      status: (json['status'] as num).toInt(),
+      batchId: json['batch_id'] as String,
+      majorId: json['major_id'] as String,
+      departmentId: (json['department_id'] as num?)?.toInt(),
+      notes: json['notes'] as String?,
+      instructorIds:
+          (json['instructor_ids'] as List<dynamic>)
+              .map((e) => e as String)
+              .toList(),
+      reviewerIds:
+          (json['reviewer_ids'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$ThesisCreateRequestToJson(
+  ThesisCreateRequest instance,
+) => <String, dynamic>{
+  'title': instance.title,
+  'description': instance.description,
+  'thesis_type': instance.thesisType,
+  'start_date': instance.startDate,
+  'end_date': instance.endDate,
+  'status': instance.status,
+  'batch_id': instance.batchId,
+  'major_id': instance.majorId,
+  'department_id': instance.departmentId,
+  'notes': instance.notes,
+  'instructor_ids': instance.instructorIds,
+  'reviewer_ids': instance.reviewerIds,
+};

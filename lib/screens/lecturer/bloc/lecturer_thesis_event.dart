@@ -27,3 +27,12 @@ class FilterLecturerTheses extends LecturerThesisEvent {
   @override
   List<Object> get props => [status, searchQuery];
 }
+
+class CreateThesis extends LecturerThesisEvent {
+  final ThesisCreateRequest thesisRequest;
+
+  const CreateThesis({required this.thesisRequest});
+
+  @override
+  List<Object> get props => [thesisRequest];
+}

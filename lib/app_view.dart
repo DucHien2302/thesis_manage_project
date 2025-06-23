@@ -11,6 +11,11 @@ import 'package:thesis_manage_project/screens/group/bloc/group_bloc.dart';
 import 'package:thesis_manage_project/screens/group/group_screen.dart';
 import 'package:thesis_manage_project/screens/group/views/invitations_view.dart';
 import 'package:thesis_manage_project/screens/lecturer/lecturer_dashboard.dart';
+import 'package:thesis_manage_project/screens/lecturer/lecturer_thesis_screen.dart';
+import 'package:thesis_manage_project/screens/lecturer/views/create_thesis_screen.dart';
+import 'package:thesis_manage_project/screens/lecturer/bloc/lecturer_thesis_bloc.dart';
+import 'package:thesis_manage_project/repositories/lecturer_thesis_repository.dart';
+import 'package:thesis_manage_project/utils/api_service.dart';
 import 'package:thesis_manage_project/screens/student/student_dashboard.dart';
 
 class AppView extends StatelessWidget {
@@ -24,6 +29,14 @@ class AppView extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,      routes: {
         AppRoutes.groups: (context) => const GroupScreen(),
+        AppRoutes.lecturerThesis: (context) => const LecturerThesisScreen(),
+        AppRoutes.createThesis: (context) => CreateThesisScreen(
+          lecturerThesisBloc: LecturerThesisBloc(
+            repository: LecturerThesisRepository(
+              apiService: ApiService(),
+            ),
+          ),
+        ),
         AppRoutes.invitations: (context) => BlocProvider.value(
           value: BlocProvider.of<GroupBloc>(context),
           child: const InvitationsView(),

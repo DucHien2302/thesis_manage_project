@@ -350,3 +350,52 @@ class GroupModel extends Equatable {
   @override
   List<Object?> get props => [id, name, leaderId, thesisId, members];
 }
+
+@JsonSerializable()
+class ThesisCreateRequest extends Equatable {
+  final String title;
+  final String description;
+  @JsonKey(name: 'thesis_type')
+  final int thesisType;
+  @JsonKey(name: 'start_date')
+  final String startDate;
+  @JsonKey(name: 'end_date')
+  final String endDate;
+  final int status;
+  @JsonKey(name: 'batch_id')
+  final String batchId;
+  @JsonKey(name: 'major_id')
+  final String majorId;
+  @JsonKey(name: 'department_id')
+  final int? departmentId;
+  final String? notes;
+  @JsonKey(name: 'instructor_ids')
+  final List<String> instructorIds;
+  @JsonKey(name: 'reviewer_ids')
+  final List<String> reviewerIds;
+
+  const ThesisCreateRequest({
+    required this.title,
+    required this.description,
+    required this.thesisType,
+    required this.startDate,
+    required this.endDate,
+    required this.status,
+    required this.batchId,
+    required this.majorId,
+    this.departmentId,
+    this.notes,
+    required this.instructorIds,
+    this.reviewerIds = const [],
+  });
+
+  factory ThesisCreateRequest.fromJson(Map<String, dynamic> json) => 
+      _$ThesisCreateRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$ThesisCreateRequestToJson(this);
+
+  @override
+  List<Object?> get props => [
+    title, description, thesisType, startDate, endDate, status,
+    batchId, majorId, departmentId, notes, instructorIds, reviewerIds
+  ];
+}
